@@ -24,8 +24,6 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
   late TextEditingController _emailCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _sqftCtrl;
-  late TextEditingController _richTextClientDetailsCtrl;
-  bool _useRichTextMode = false;
 
   final List<Map<String, TextEditingController>> _additionalFieldControllers = [];
 
@@ -43,8 +41,6 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
     _emailCtrl = TextEditingController(text: _invoice.email);
     _phoneCtrl = TextEditingController(text: _invoice.phoneNo);
     _sqftCtrl = TextEditingController(text: _invoice.sqft);
-    _richTextClientDetailsCtrl = TextEditingController(text: _invoice.richTextClientDetails);
-    _useRichTextMode = _invoice.useRichTextClientDetails;
   }
 
   @override
@@ -59,7 +55,6 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
     _sqftCtrl.dispose();
-    _richTextClientDetailsCtrl.dispose();
     super.dispose();
   }
 
@@ -105,8 +100,6 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
       _invoice.email = _emailCtrl.text.trim();
       _invoice.phoneNo = _phoneCtrl.text.trim();
       _invoice.sqft = _sqftCtrl.text.trim();
-      _invoice.useRichTextClientDetails = _useRichTextMode;
-      _invoice.richTextClientDetails = _richTextClientDetailsCtrl.text.trim();
 
       _invoice.additionalClientFields = _additionalFieldControllers.map((m) {
         return {
@@ -336,227 +329,161 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
                     const SizedBox(height: 20),
 
                     // Client Details
-                    // Client Details Header & Toggle
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.person_outline,
-                                color: Color(0xFF1565C0)),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Client Details',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        // Modern Toggle
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(10),
+                        const Icon(Icons.person_outline,
+                            color: Color(0xFF1565C0)),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Client Details',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
-                          child: Row(
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    _buildLabel('FULL NAME'),
+                    _buildTextField(
+                      controller: _clientNameCtrl,
+                      hint: 'JAIKUMAR RAMAN',
+                      validator: (v) =>
+                          v!.isEmpty ? 'Client name required' : null,
+                    ),
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildToggleButton(
-                                "Separate",
-                                !_useRichTextMode,
-                                () => setState(() => _useRichTextMode = false),
-                              ),
-                              _buildToggleButton(
-                                "Quick Text",
-                                _useRichTextMode,
-                                () => setState(() => _useRichTextMode = true),
-                              ),
+                              _buildLabel('UNIT'),
+                              _buildTextField(
+                                  controller: _unitCtrl, hint: '408'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildLabel('NO. OF BEDROOMS'),
+                              _buildTextField(
+                                  controller: _bedroomsCtrl,
+                                  hint: '2+maids'),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
-                    if (_useRichTextMode) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    _buildLabel('LOCATION'),
+                    _buildTextField(
+                      controller: _locationCtrl,
+                      hint: 'Amalia Residences, Al Furjan, Jebel Ali First',
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 12),
+
+                    _buildLabel('EMAIL ADDRESS'),
+                    _buildTextField(
+                      controller: _emailCtrl,
+                      hint: 'jazikhaan@gmail.com',
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 12),
+
+                    _buildLabel('PHONE NO.'),
+                    _buildTextField(
+                      controller: _phoneCtrl,
+                      hint: '0505276988',
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 12),
+
+                    _buildLabel('SQFT'),
+                    _buildTextField(
+                      controller: _sqftCtrl,
+                      hint: '1253',
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Additional dynamic fields
+                    ..._additionalFieldControllers.asMap().entries.map((entry) {
+                      final idx = entry.key;
+                      final controllers = entry.value;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel('ALL CLIENT DETAILS (PASTE HERE)'),
-                          TextButton.icon(
-                            onPressed: () {
-                              final text = _richTextClientDetailsCtrl.text;
-                              final selection = _richTextClientDetailsCtrl.selection;
-                              if (selection.isValid && !selection.isCollapsed) {
-                                final selectedText = text.substring(selection.start, selection.end);
-                                final newText = text.replaceRange(selection.start, selection.end, '**$selectedText**');
-                                _richTextClientDetailsCtrl.text = newText;
-                                _richTextClientDetailsCtrl.selection = TextSelection.collapsed(offset: selection.start + 2 + selectedText.length + 2);
-                              } else {
-                                final newText = text + ' ****';
-                                _richTextClientDetailsCtrl.text = newText;
-                                _richTextClientDetailsCtrl.selection = TextSelection.collapsed(offset: newText.length - 2);
-                              }
-                            },
-                            icon: const Icon(Icons.format_bold, size: 18),
-                            label: const Text('Bold'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFF1565C0),
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ),
-                        ],
-                      ),
-                      _buildTextField(
-                        controller: _richTextClientDetailsCtrl,
-                        hint: 'Type or Paste Client Details here...\nUse Bold button to highlight.',
-                        maxLines: 10,
-                      ),
-                      const SizedBox(height: 12),
-                    ] else ...[
-                      _buildLabel('FULL NAME'),
-                      _buildTextField(
-                        controller: _clientNameCtrl,
-                        hint: 'JAIKUMAR RAMAN',
-                        validator: (v) =>
-                            v!.isEmpty ? 'Client name required' : null,
-                      ),
-                      const SizedBox(height: 12),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel('UNIT'),
-                                _buildTextField(
-                                    controller: _unitCtrl, hint: '408'),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel('NO. OF BEDROOMS'),
-                                _buildTextField(
-                                    controller: _bedroomsCtrl,
-                                    hint: '2+maids'),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      _buildLabel('LOCATION'),
-                      _buildTextField(
-                        controller: _locationCtrl,
-                        hint: 'Amalia Residences, Al Furjan, Jebel Ali First',
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 12),
-
-                      _buildLabel('EMAIL ADDRESS'),
-                      _buildTextField(
-                        controller: _emailCtrl,
-                        hint: 'jazikhaan@gmail.com',
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      const SizedBox(height: 12),
-
-                      _buildLabel('PHONE NO.'),
-                      _buildTextField(
-                        controller: _phoneCtrl,
-                        hint: '0505276988',
-                        keyboardType: TextInputType.phone,
-                      ),
-                      const SizedBox(height: 12),
-
-                      _buildLabel('SQFT'),
-                      _buildTextField(
-                        controller: _sqftCtrl,
-                        hint: '1253',
-                        keyboardType: TextInputType.number,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Additional dynamic fields
-                      ..._additionalFieldControllers.asMap().entries.map((entry) {
-                        final idx = entry.key;
-                        final controllers = entry.value;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildLabel('FIELD LABEL'),
-                                      _buildTextField(
-                                        controller: controllers['label']!,
-                                        hint: 'Label',
-                                      ),
-                                    ],
-                                  ),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildLabel('FIELD LABEL'),
+                                    _buildTextField(
+                                      controller: controllers['label']!,
+                                      hint: 'Label',
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  flex: 3,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildLabel('VALUE'),
-                                      _buildTextField(
-                                        controller: controllers['value']!,
-                                        hint: 'Value',
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.remove_circle_outline,
-                                      color: Colors.red),
-                                  onPressed: () => _removeDynamicField(idx),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                          ],
-                        );
-                      }),
-
-                      GestureDetector(
-                        onTap: _addDynamicField,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.add_circle_outline,
-                                color: Color(0xFF1565C0)),
-                            const SizedBox(width: 6),
-                            const Text(
-                              'Add Item',
-                              style: TextStyle(
-                                color: Color(0xFF1565C0),
-                                fontWeight: FontWeight.w600,
                               ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 3,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildLabel('VALUE'),
+                                    _buildTextField(
+                                      controller: controllers['value']!,
+                                      hint: 'Value',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.remove_circle_outline,
+                                    color: Colors.red),
+                                onPressed: () => _removeDynamicField(idx),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      );
+                    }),
+
+                    GestureDetector(
+                      onTap: _addDynamicField,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.add_circle_outline,
+                              color: Color(0xFF1565C0)),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Add Item',
+                            style: TextStyle(
+                              color: Color(0xFF1565C0),
+                              fontWeight: FontWeight.w600,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'User Can Add More dynamic Fields About Clients',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                    ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'User Can Add More dynamic Fields About Clients',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
                     const SizedBox(height: 80),
                   ],
                 ),
@@ -693,36 +620,6 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      ),
-    );
-  }
-
-  Widget _buildToggleButton(String text, bool isSelected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  )
-                ]
-              : [],
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? const Color(0xFF1565C0) : Colors.grey[600],
-          ),
-        ),
       ),
     );
   }

@@ -927,24 +927,17 @@ class PdfGeneratorService {
                           child: pw.Column(
                             crossAxisAlignment: pw.CrossAxisAlignment.start,
                             children: [
-                              pw.Text('CLIENT DETAILS:',
-                                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10, color: pdfMutedSlate)),
+                              pw.Text('CLIENT DETAILS:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10, color: pdfMutedSlate)),
                               pw.SizedBox(height: 5),
-                              if (invoice.useRichTextClientDetails)
-                                _buildRichText(invoice.richTextClientDetails, const pw.TextStyle(fontSize: 9))
-                              else ...[
-                                pw.Text(invoice.clientName.toUpperCase(),
-                                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12, color: pdfDarkSlate)),
-                                pw.Text('UNIT - ${invoice.unit}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
-                                pw.Text('Location: ${invoice.location}',
-                                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
-                                pw.Text('Email: ${invoice.email}', style: const pw.TextStyle(fontSize: 9)),
-                                pw.Text('Sqft: ${invoice.sqft}', style: const pw.TextStyle(fontSize: 9)),
-                                // RESTORED: Additional Client Fields Loop
-                                ...invoice.additionalClientFields
-                                    .where((f) => f['label']!.isNotEmpty || f['value']!.isNotEmpty)
-                                    .map((f) => pw.Text('${f['label']}: ${f['value']}', style: const pw.TextStyle(fontSize: 9))),
-                              ],
+                              pw.Text(invoice.clientName.toUpperCase(), style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12, color: pdfDarkSlate)),
+                              pw.Text('UNIT - ${invoice.unit}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                              pw.Text('Location: ${invoice.location}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                              pw.Text('Email: ${invoice.email}', style: const pw.TextStyle(fontSize: 9)),
+                              pw.Text('Sqft: ${invoice.sqft}', style: const pw.TextStyle(fontSize: 9)),
+                              // RESTORED: Additional Client Fields Loop
+                              ...invoice.additionalClientFields
+                                  .where((f) => f['label']!.isNotEmpty || f['value']!.isNotEmpty)
+                                  .map((f) => pw.Text('${f['label']}: ${f['value']}', style: const pw.TextStyle(fontSize: 9))),
                             ],
                           ),
                         ),
@@ -1099,35 +1092,6 @@ class PdfGeneratorService {
     );
   }
 
-  static pw.Widget _buildRichText(String text, pw.TextStyle baseStyle) {
-    if (text.isEmpty) return pw.SizedBox();
-
-    final List<pw.TextSpan> spans = [];
-    final RegExp regExp = RegExp(r'\*\*(.*?)\*\*');
-
-    int lastMatchEnd = 0;
-    for (final Match match in regExp.allMatches(text)) {
-      if (match.start > lastMatchEnd) {
-        spans.add(pw.TextSpan(text: text.substring(lastMatchEnd, match.start)));
-      }
-      spans.add(pw.TextSpan(
-        text: match.group(1),
-        style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
-      ));
-      lastMatchEnd = match.end;
-    }
-
-    if (lastMatchEnd < text.length) {
-      spans.add(pw.TextSpan(text: text.substring(lastMatchEnd)));
-    }
-
-    return pw.RichText(
-      text: pw.TextSpan(
-        style: baseStyle,
-        children: spans,
-      ),
-    );
-  }
 
   static pw.Widget _bankRow(String label, String value) {
     return pw.Padding(
