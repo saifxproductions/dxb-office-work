@@ -1014,7 +1014,6 @@ class _PreviewScreenState extends State<PreviewScreen> {
         _generatedFile = savedFile;
         _isGenerating = false;
       });
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1024,11 +1023,31 @@ class _PreviewScreenState extends State<PreviewScreen> {
             action: SnackBarAction(
               label: 'Share',
               textColor: Colors.white,
-              onPressed: _shareFile,
+              onPressed: () {
+                // 1. Immediately hide the snackbar
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                // 2. Execute your share logic
+                _shareFile();
+              },
             ),
           ),
         );
       }
+      // if (mounted) {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     SnackBar(
+      //       content: Text('PDF saved: $fileName'),
+      //       backgroundColor: kPrimaryEmerald,
+      //       behavior: SnackBarBehavior.floating,
+      //       action: SnackBarAction(
+      //         label: 'Share',
+      //         textColor: Colors.white,
+      //         onPressed: _shareFile,
+      //       ),
+      //     ),
+      //   );
+      // }
     } catch (e) {
       setState(() {
         _isGenerating = false;
@@ -1222,15 +1241,19 @@ class _PreviewScreenState extends State<PreviewScreen> {
                                   children: [
                                     Text('CLIENT DETAILS:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: kMutedSlate)),
                                     const SizedBox(height: 6),
-                                    Text(inv.clientName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                    Text('UNIT - ${inv.unit}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                                    Text('Location: ${inv.location}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                                    Text('No. of bedrooms: ${inv.noOfBedrooms}', style: const TextStyle(fontSize: 10)),
-                                    Text('Email: ${inv.email}', style: const TextStyle(fontSize: 10)),
-                                    Text('Sqft: ${inv.sqft}', style: const TextStyle(fontSize: 10)),
-                                    ...inv.additionalClientFields
-                                        .where((f) => f['label']!.isNotEmpty || f['value']!.isNotEmpty)
-                                        .map((f) => Text('${f['label']}: ${f['value']}', style: const TextStyle(fontSize: 10))),
+                                    if (inv.useRichTextClientDetails)
+                                      _buildRichText(inv.richTextClientDetails)
+                                    else ...[
+                                      Text(inv.clientName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                      Text('UNIT - ${inv.unit}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                      Text('Location: ${inv.location}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                      Text('No. of bedrooms: ${inv.noOfBedrooms}', style: const TextStyle(fontSize: 10)),
+                                      Text('Email: ${inv.email}', style: const TextStyle(fontSize: 10)),
+                                      Text('Sqft: ${inv.sqft}', style: const TextStyle(fontSize: 10)),
+                                      ...inv.additionalClientFields
+                                          .where((f) => f['label']!.isNotEmpty || f['value']!.isNotEmpty)
+                                          .map((f) => Text('${f['label']}: ${f['value']}', style: const TextStyle(fontSize: 10))),
+                                    ],
                                   ],
                                 ),
                               ),
@@ -1425,6 +1448,45 @@ class _PreviewScreenState extends State<PreviewScreen> {
     return Padding(
       padding: const EdgeInsets.all(5),
       child: Text(text, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w500), textAlign: align),
+    );
+  }
+
+  Widget _buildRichText(String text) {
+    if (text.isEmpty) return const SizedBox();
+
+    final List<TextSpan> spans = [];
+    final RegExp regExp = RegExp(r'\*\*(.*?)\*\*');
+
+    int lastMatchEnd = 0;
+    for (final Match match in regExp.allMatches(text)) {
+      if (match.start > lastMatchEnd) {
+        spans.add(TextSpan(
+          text: text.substring(lastMatchEnd, match.start),
+          style: const TextStyle(color: Colors.black, fontSize: 10),
+        ));
+      }
+      spans.add(TextSpan(
+        text: match.group(1),
+        style: const TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          fontSize: 10,
+        ),
+      ));
+      lastMatchEnd = match.end;
+    }
+
+    if (lastMatchEnd < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(lastMatchEnd),
+        style: const TextStyle(color: Colors.black, fontSize: 10),
+      ));
+    }
+
+    return RichText(
+      text: TextSpan(
+        children: spans,
+      ),
     );
   }
 

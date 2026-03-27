@@ -34,6 +34,8 @@ class InvoiceModel {
   String phoneNo;
   String sqft;
   List<Map<String, String>> additionalClientFields;
+  bool useRichTextClientDetails;
+  String richTextClientDetails;
 
   // Step 2 - Service Items
   List<ServiceItem> serviceItems;
@@ -77,6 +79,8 @@ class InvoiceModel {
     this.bankName = 'RAK',
     this.branchName = 'Rak BankEmaar BussinnessPark',
     this.vatRate = 5.0,
+    this.useRichTextClientDetails = false,
+    this.richTextClientDetails = '',
   })  : issueDate = issueDate ?? DateTime.now(),
         additionalClientFields = additionalClientFields ?? [],
         serviceItems = serviceItems ??
