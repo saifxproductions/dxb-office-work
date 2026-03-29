@@ -803,7 +803,7 @@ class PdfGeneratorService {
                   width: 200,
                   decoration: pw.BoxDecoration(
                     color: PdfColor.fromInt(0xFFFFFFFF),
-                    borderRadius: pw.BorderRadius.circular(12),
+                    borderRadius: pw.BorderRadius.circular(10), // Slightly tighter radius for compact look
                     border: pw.Border.all(color: PdfColor.fromInt(0xFFEEEEEE), width: 1),
                   ),
                   child: pw.Column(
@@ -812,24 +812,24 @@ class PdfGeneratorService {
                     children: [
                       // Accent Top Bar
                       pw.Container(
-                        height: 4,
+                        height: 3, // Thinner stripe
                         width: double.infinity,
                         decoration: pw.BoxDecoration(
                           color: PdfColor.fromInt(0xFF2E7D32),
                           borderRadius: const pw.BorderRadius.only(
-                            topLeft: pw.Radius.circular(12),
-                            topRight: pw.Radius.circular(12),
+                            topLeft: pw.Radius.circular(10),
+                            topRight: pw.Radius.circular(10),
                           ),
                         ),
                       ),
                       pw.Padding(
-                        padding: const pw.EdgeInsets.all(16),
+                        padding: const pw.EdgeInsets.all(10), // Reduced from 16 to 10
                         child: pw.Column(
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
                             // Badge Style Label
                             pw.Container(
-                              padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Tightened
                               decoration: pw.BoxDecoration(
                                 color: PdfColor.fromInt(0xFFE8F5E9),
                                 borderRadius: pw.BorderRadius.circular(4),
@@ -839,35 +839,20 @@ class PdfGeneratorService {
                                 style: pw.TextStyle(
                                   color: PdfColor.fromInt(0xFF2E7D32),
                                   fontWeight: pw.FontWeight.bold,
-                                  fontSize: 8,
-                                  letterSpacing: 1.2,
+                                  fontSize: 7, // Smaller font
+                                  letterSpacing: 1.0,
                                 ),
                               ),
                             ),
-                            pw.SizedBox(height: 16),
+                            pw.SizedBox(height: 8), // Minimal gap after badge
 
-                            // Date Row
                             _modernMetaRow('Date', DateFormat('MMM dd, yyyy').format(invoice.issueDate)),
-                            pw.Padding(
-                              padding: const pw.EdgeInsets.symmetric(vertical: 6),
-                              child: pw.Divider(color: PdfColor.fromInt(0xFFF5F5F5), thickness: 1),
-                            ),
+                            pw.SizedBox(height: 6), // Tight spacing between blocks
 
-                            // Invoice Row
                             _modernMetaRow('Invoice', '#${invoice.invoiceNumber}'),
-                            pw.Padding(
-                              padding: const pw.EdgeInsets.symmetric(vertical: 6),
-                              child: pw.Divider(color: PdfColor.fromInt(0xFFF5F5F5), thickness: 1),
-                            ),
+                            pw.SizedBox(height: 6),
 
-                            // Reference Row (with guaranteed visibility logic)
                             _modernMetaRow('Reference', (invoice.referenceCode?.isEmpty ?? true) ? 'N/A' : invoice.referenceCode!),
-
-                            // Bottom Divider to close the layout
-                            pw.Padding(
-                              padding: const pw.EdgeInsets.symmetric(vertical: 6),
-                              child: pw.Divider(color: PdfColor.fromInt(0xFFF5F5F5), thickness: 1),
-                            ),
                           ],
                         ),
                       ),
@@ -879,112 +864,77 @@ class PdfGeneratorService {
               //   right: 24,
               //   top: 30,
               //   child: pw.Container(
-              //     padding: const pw.EdgeInsets.all(15),
-              //     width: 180,
+              //     width: 200,
               //     decoration: pw.BoxDecoration(
-              //       color: PdfColor.fromInt(0x33FFFFFF), // 20% White Transparency
-              //       borderRadius: pw.BorderRadius.circular(15),
-              //       border: pw.Border.all(color: PdfColor.fromInt(0x66FFFFFF), width: 0.5),
+              //       color: PdfColor.fromInt(0xFFFFFFFF),
+              //       borderRadius: pw.BorderRadius.circular(12),
+              //       border: pw.Border.all(color: PdfColor.fromInt(0xFFEEEEEE), width: 1),
               //     ),
               //     child: pw.Column(
-              //       crossAxisAlignment: pw.CrossAxisAlignment.start,
+              //       crossAxisAlignment: pw.CrossAxisAlignment.stretch, // Ensure children take full width
               //       mainAxisSize: pw.MainAxisSize.min,
               //       children: [
-              //         pw.Text(
-              //           'PROFORMA INVOICE',
-              //           style: pw.TextStyle(
-              //             color: PdfColors.green,
-              //             fontWeight: pw.FontWeight.bold,
-              //             fontSize: 10,
-              //             letterSpacing: 1.0,
+              //         // Accent Top Bar
+              //         pw.Container(
+              //           height: 4,
+              //           decoration: pw.BoxDecoration(
+              //             color: PdfColor.fromInt(0xFF2E7D32),
+              //             borderRadius: const pw.BorderRadius.only(
+              //               topLeft: pw.Radius.circular(12),
+              //               topRight: pw.Radius.circular(12),
+              //             ),
               //           ),
               //         ),
-              //         pw.SizedBox(height: 10),
-              //         _metaLabel('Date:', DateFormat('MMM-dd-yyyy').format(invoice.issueDate)),
-              //         _metaLabel('Invoice:', invoice.invoiceNumber),
-              //         _metaLabel('Ref:', invoice.referenceCode),
+              //         pw.Padding(
+              //           padding: const pw.EdgeInsets.all(16),
+              //           child: pw.Column(
+              //             crossAxisAlignment: pw.CrossAxisAlignment.start,
+              //             children: [
+              //               // Badge Style Label
+              //               pw.Container(
+              //                 padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              //                 decoration: pw.BoxDecoration(
+              //                   color: PdfColor.fromInt(0xFFE8F5E9),
+              //                   borderRadius: pw.BorderRadius.circular(4),
+              //                 ),
+              //                 child: pw.Text(
+              //                   'PROFORMA INVOICE',
+              //                   style: pw.TextStyle(
+              //                     color: PdfColor.fromInt(0xFF2E7D32),
+              //                     fontWeight: pw.FontWeight.bold,
+              //                     fontSize: 8,
+              //                     letterSpacing: 1.2,
+              //                   ),
+              //                 ),
+              //               ),
+              //               pw.SizedBox(height: 8),
+              //
+              //               // Date Row
+              //               _modernMetaRow('Date', DateFormat('MMM dd, yyyy').format(invoice.issueDate)),
+              //               // pw.Padding(
+              //               //   padding: const pw.EdgeInsets.symmetric(vertical: 6),
+              //               //   child: pw.Divider(color: PdfColor.fromInt(0xFFF5F5F5), thickness: 1),
+              //               // ),
+              //               _modernMetaRow('Reference', (invoice.referenceCode.isEmpty) ? 'N/A' : invoice.referenceCode),
+              //
+              //               // Invoice Row
+              //               _modernMetaRow('Invoice', '#${invoice.invoiceNumber}'),
+              //               // pw.Padding(
+              //               //   padding: const pw.EdgeInsets.symmetric(vertical: 6),
+              //               //   child: pw.Divider(color: PdfColor.fromInt(0xFFF5F5F5), thickness: 1),
+              //               // ),
+              //
+              //               // Reference Row
+              //               _modernMetaRow('Reference', (invoice.referenceCode.isEmpty) ? 'N/A' : invoice.referenceCode),
+              //             ],
+              //           ),
+              //         ),
               //       ],
               //     ),
               //   ),
               // ),
             ],
           ),
-          // pw.Container(
-          //   padding: const pw.EdgeInsets.all(24),
-          //   decoration: const pw.BoxDecoration(
-          //     gradient: pw.LinearGradient(
-          //       colors: [pdfDeepTeal, pdfEmerald],
-          //       begin: pw.Alignment.topLeft,
-          //       end: pw.Alignment.bottomRight,
-          //     ),
-          //   ),
-          //   child: pw.Row(
-          //     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          //     crossAxisAlignment: pw.CrossAxisAlignment.start,
-          //     children: [
-          //       pw.Expanded(
-          //         flex: 2,
-          //         child: pw.Column(
-          //           crossAxisAlignment: pw.CrossAxisAlignment.start,
-          //           children: [
-          //             pw.Image(logoImage, width: 150),
-          //             pw.SizedBox(height: 10),
-          //             pw.Text('RA PROPERTY OBSERVER LLC',
-          //                 style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10)),
-          //             pw.Text('Inspecting for the unexpected',
-          //                 style: pw.TextStyle(color: PdfColors.white, fontSize: 10, fontStyle: pw.FontStyle.italic)),
-          //           ],
-          //         ),
-          //       ),
-          //       pw.Container(
-          //         padding: const pw.EdgeInsets.all(12),
-          //         decoration: pw.BoxDecoration(
-          //           color: PdfColor.fromInt(0x26FFFFFF), // 15% white opacity
-          //           borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
-          //           border: pw.Border.all(
-          //             color: PdfColor.fromInt(0x4DFFFFFF), // 30% white opacity
-          //             width: 0.7,
-          //           ),
-          //         ),
-          //         child: pw.Column(
-          //           crossAxisAlignment: pw.CrossAxisAlignment.start,
-          //           mainAxisSize: pw.MainAxisSize.min,
-          //           children: [
-          //             pw.Text(
-          //               'PROFORMA INVOICE',
-          //               style: pw.TextStyle(
-          //                 color: PdfColors.white,
-          //                 fontWeight: pw.FontWeight.bold,
-          //                 fontSize: 9,
-          //                 letterSpacing: 1.0,
-          //               ),
-          //             ),
-          //             pw.Container(
-          //               margin: const pw.EdgeInsets.symmetric(vertical: 4),
-          //               height: 0.5,
-          //               width: 30,
-          //               color: PdfColors.white,
-          //             ),
-          //             pw.Text(
-          //               DateFormat('MMM dd, yyyy').format(invoice.issueDate),
-          //               style: pw.TextStyle(color: PdfColors.white, fontSize: 8),
-          //             ),
-          //             pw.SizedBox(height: 1),
-          //             pw.Text(
-          //               invoice.invoiceNumber,
-          //               style: pw.TextStyle(color: PdfColors.white, fontSize: 9, fontWeight: pw.FontWeight.bold),
-          //             ),
-          //             pw.SizedBox(height: 1),
-          //             pw.Text(
-          //               invoice.referenceCode,
-          //               style: pw.TextStyle(color: PdfColors.white, fontSize: 7),
-          //             ),
-          //           ],
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
 
           // --- 2. MAIN BODY CONTENT ---
           pw.SizedBox(height: 24),
@@ -1192,40 +1142,29 @@ class PdfGeneratorService {
     );
   }
 
- static pw.Widget _modernMetaRow(String label, String value) {
-    return pw.Row(
-      // 🔥 FIXED: Changed 'mainAxisSize' to 'mainAxisAlignment'
-      // AND: Removed the explicit MainAxisSize.max because Rows take max width by default
-      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+// Updated Compact Helper
+  static pw.Widget _modernMetaRow(String label, String value) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
           label.toUpperCase(),
           style: pw.TextStyle(
-            color: PdfColor.fromInt(0xFF9E9E9E), // Professional Muted Grey
-            fontSize: 7,
+            color: PdfColor.fromInt(0xFF9E9E9E),
+            fontSize: 6.5, // Slightly smaller
             fontWeight: pw.FontWeight.bold,
           ),
         ),
+        pw.SizedBox(height: 1), // Minimal gap between label and value
         pw.Text(
           value,
           style: pw.TextStyle(
-            color: PdfColor.fromInt(0xFF212121), // High-contrast Deep Slate
-            fontSize: 9,
+            color: PdfColor.fromInt(0xFF212121),
+            fontSize: 8.5, // Slightly smaller to ensure fit
             fontWeight: pw.FontWeight.bold,
           ),
         ),
       ],
-    );
-  }
-  static pw.Widget _metaLabel(String label, String value) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 3),
-      child: pw.Row(
-        children: [
-          pw.Text('$label ', style: pw.TextStyle(color: PdfColors.black, fontSize: 8)),
-          pw.Text(value, style: pw.TextStyle(color: PdfColors.grey800, fontWeight: pw.FontWeight.bold, fontSize: 8)),
-        ],
-      ),
     );
   }
   static pw.Widget _buildRichText(String text, pw.TextStyle baseStyle) {
