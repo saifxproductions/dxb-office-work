@@ -1,10 +1,27 @@
 import 'dart:io';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'invoice_model.dart';
 
 // ============================================================
 // DATA MODEL - Fill these fields dynamically
 // ============================================================
+
+class ProposalServiceItem {
+  final String description;
+  final String unit;
+  final int qty;
+  final double price;
+
+  const ProposalServiceItem({
+    required this.description,
+    required this.unit,
+    required this.qty,
+    required this.price,
+  });
+
+  double get amount => qty * price;
+}
 
 class ProposalData {
   final String clientName;
@@ -14,9 +31,8 @@ class ProposalData {
   final String sqftArea;
   final String phone;
   final String bedroom;
-  final String propertyType;
-  final int numberOfUnits;
-  final double pricePerUnit;
+  final List<ProposalServiceItem> serviceItems;
+  final double vatRate;
   final int year;
 
   const ProposalData({
@@ -27,15 +43,39 @@ class ProposalData {
     required this.sqftArea,
     required this.phone,
     required this.bedroom,
-    this.propertyType = '1BHK',
-    this.numberOfUnits = 1,
-    this.pricePerUnit = 750,
+    required this.serviceItems,
+    this.vatRate = 5.0,
     this.year = 2026,
   });
 
-  double get totalCost => numberOfUnits * pricePerUnit;
-  double get vat => totalCost * 0.05;
-  double get grandTotal => totalCost + vat;
+  /// Bridge from InvoiceModel to ProposalData
+  factory ProposalData.fromInvoiceModel(InvoiceModel invoice) {
+    return ProposalData(
+      clientName: invoice.clientName.isNotEmpty
+          ? invoice.clientName
+          : invoice.richTextClientDetails.split('\n').first,
+      unitNo: invoice.unit,
+      location: invoice.location,
+      email: invoice.email,
+      sqftArea: invoice.sqft,
+      phone: invoice.phoneNo,
+      bedroom: invoice.noOfBedrooms,
+      vatRate: invoice.vatRate,
+      serviceItems: invoice.serviceItems
+          .map((item) => ProposalServiceItem(
+                description: item.itemName,
+                unit: item.unit,
+                qty: item.noOfUnits,
+                price: item.perUnit,
+              ))
+          .toList(),
+    );
+  }
+
+  double get subtotal =>
+      serviceItems.fold(0.0, (sum, item) => sum + item.amount);
+  double get vat => subtotal * (vatRate / 100);
+  double get grandTotal => subtotal + vat;
 }
 
 // ============================================================
@@ -563,7 +603,7 @@ class PropertyInspectionPdfGenerator {
                   ),
                   child: pw.Column(
                     children: [
-                      // Table header
+                      // Table title header
                       pw.Container(
                         color: AppTheme.tableHeaderBg,
                         padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -586,25 +626,25 @@ class PropertyInspectionPdfGenerator {
 
                       // Column headers
                       _tableRow(
-                        ['Type of property', 'No. of units', 'Price', 'Total'],
+                        ['DESCRIPTION', 'UNIT', 'QTY', 'PRICE', 'AMOUNT (AED)'],
                         isHeader: true,
                       ),
 
-                      // Data row
-                      _tableRow([
-                        data.propertyType,
-                        data.numberOfUnits.toString(),
-                        data.pricePerUnit.toStringAsFixed(0),
-                        data.totalCost.toStringAsFixed(0),
-                      ]),
+                      // Dynamic service item rows
+                      ...data.serviceItems.map((item) => _tableRow([
+                        item.description,
+                        item.unit,
+                        item.qty.toString(),
+                        item.price > 0 ? item.price.toStringAsFixed(0) : '',
+                        item.amount > 0 ? item.amount.toStringAsFixed(2) : '0.00',
+                      ])),
 
-                      // Empty rows for padding
-                      _tableRow(['', '', '', '']),
-                      _tableRow(['', '', '', '']),
+                      // Empty row for visual spacing
+                      _tableRow(['', '', '', '', '']),
 
                       // Totals
-                      _totalRow('Total Cost', data.totalCost.toStringAsFixed(2)),
-                      _totalRow('Government Vat 5%', data.vat.toStringAsFixed(2)),
+                      _totalRow('Subtotal', data.subtotal.toStringAsFixed(2)),
+                      _totalRow('Government Vat ${data.vatRate.toInt()}%', data.vat.toStringAsFixed(2)),
                       _totalRow('Grand Total', data.grandTotal.toStringAsFixed(2), bold: true),
                     ],
                   ),
@@ -683,24 +723,32 @@ class PropertyInspectionPdfGenerator {
   // ----------------------------------------------------------
 
   pw.Widget _buildLogo() {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          'PROPERTY',
-          style: pw.TextStyle(color: AppTheme.brandGreen, fontSize: 11, fontWeight: pw.FontWeight.bold),
-        ),
-        pw.Text(
-          'INSPECTION DXB',
-          style: pw.TextStyle(color: AppTheme.brandGreen, fontSize: 11, fontWeight: pw.FontWeight.bold),
-        ),
-        pw.Text(
-          'RA PROPERTY OBSERVER LLC',
-          style: const pw.TextStyle(color: AppTheme.white, fontSize: 7),
-        ),
-      ],
+    return pw.Image(
+      pw.MemoryImage(
+        File('assets/images/logo.png').readAsBytesSync(),
+      ),
+      width: 100, // Adjust the width as needed
     );
   }
+  // pw.Widget _buildLogo() {
+  //   return pw.Column(
+  //     crossAxisAlignment: pw.CrossAxisAlignment.start,
+  //     children: [
+  //       pw.Text(
+  //         'PROPERTY',
+  //         style: pw.TextStyle(color: AppTheme.brandGreen, fontSize: 11, fontWeight: pw.FontWeight.bold),
+  //       ),
+  //       pw.Text(
+  //         'INSPECTION DXB',
+  //         style: pw.TextStyle(color: AppTheme.brandGreen, fontSize: 11, fontWeight: pw.FontWeight.bold),
+  //       ),
+  //       pw.Text(
+  //         'RA PROPERTY OBSERVER LLC',
+  //         style: const pw.TextStyle(color: AppTheme.white, fontSize: 7),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   pw.Widget _pageHeader() {
     return pw.Container(

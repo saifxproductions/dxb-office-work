@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'invoice_model.dart';
 import 'preview_screen.dart';
+import 'property_inspection_pdf_generator.dart';
 
 class Step2LineItems extends StatefulWidget {
   final InvoiceModel invoice;
@@ -105,6 +108,45 @@ class _Step2LineItemsState extends State<Step2LineItems> {
     widget.invoice.vatRate =
         double.tryParse(_vatCtrl.text) ?? 5.0;
     setState(() {});
+  }
+
+  bool _isGeneratingProposal = false;
+
+  Future<void> _generateProposal() async {
+    _syncAndCalculate();
+    setState(() => _isGeneratingProposal = true);
+
+    try {
+      final proposalData = ProposalData.fromInvoiceModel(widget.invoice);
+      final generator = PropertyInspectionPdfGenerator(data: proposalData);
+
+      final dir = await getTemporaryDirectory();
+      final clientName = widget.invoice.clientName
+          .toUpperCase()
+          .replaceAll(RegExp(r'[^A-Z0-9 ]'), '')
+          .trim();
+      final fileName = 'Proposal_${clientName.isNotEmpty ? clientName : 'Client'}.pdf';
+      final outputPath = '${dir.path}/$fileName';
+
+      final file = await generator.generate(outputPath);
+
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'Property Inspection Proposal - $fileName',
+        subject: fileName,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error generating proposal: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGeneratingProposal = false);
+    }
   }
 
   void _goToPreview() {
@@ -481,35 +523,65 @@ class _Step2LineItemsState extends State<Step2LineItems> {
           ),
           // Bottom buttons
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             color: Colors.white,
             child: Row(
               children: [
+                // Preview PDF
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _goToPreview,
-                    icon: const Icon(Icons.visibility_outlined),
-                    label: const Text('Preview PDF'),
+                    icon: const Icon(Icons.visibility_outlined, size: 18),
+                    label: const Text('Preview', style: TextStyle(fontSize: 13)),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
+                // Generate
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: _goToPreview,
-                    icon: const Icon(Icons.send, color: Colors.white),
+                    icon: const Icon(Icons.send, color: Colors.white, size: 18),
                     label: const Text(
                       'Generate',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.white, fontSize: 13),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1565C0),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Proposal
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isGeneratingProposal ? null : _generateProposal,
+                    icon: _isGeneratingProposal
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.description_outlined, color: Colors.white, size: 18),
+                    label: Text(
+                      _isGeneratingProposal ? 'Wait...' : 'Proposal',
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00897B),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
