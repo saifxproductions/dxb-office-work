@@ -30,6 +30,7 @@ flutter:
   assets:
     - assets/images/logo.png
     - assets/images/seal.png
+    - assets/images/proposal_bg.jpg
 #name: dxb_office_work
 #description: "A new Flutter project."
 ## The following line prevents the package from being accidentally published to

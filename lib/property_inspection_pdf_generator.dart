@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'invoice_model.dart';
@@ -31,6 +32,7 @@ class ProposalData {
   final String sqftArea;
   final String phone;
   final String bedroom;
+  final String clientDetailsText;
   final List<ProposalServiceItem> serviceItems;
   final double vatRate;
   final int year;
@@ -43,6 +45,7 @@ class ProposalData {
     required this.sqftArea,
     required this.phone,
     required this.bedroom,
+    required this.clientDetailsText,
     required this.serviceItems,
     this.vatRate = 5.0,
     this.year = 2026,
@@ -60,6 +63,7 @@ class ProposalData {
       sqftArea: invoice.sqft,
       phone: invoice.phoneNo,
       bedroom: invoice.noOfBedrooms,
+      clientDetailsText: invoice.richTextClientDetails,
       vatRate: invoice.vatRate,
       serviceItems: invoice.serviceItems
           .map((item) => ProposalServiceItem(
@@ -98,10 +102,24 @@ class AppTheme {
 
 class PropertyInspectionPdfGenerator {
   final ProposalData data;
+  late pw.MemoryImage _logoImage;
+  late pw.MemoryImage _sealImage;
+  late pw.MemoryImage _proposalImage;
 
   PropertyInspectionPdfGenerator({required this.data});
 
   Future<File> generate(String outputPath) async {
+    // Load the logo asset once before building pages
+    _logoImage = pw.MemoryImage(
+      (await rootBundle.load('assets/images/logo.png')).buffer.asUint8List(),
+    );
+    _sealImage = pw.MemoryImage(
+      (await rootBundle.load('assets/images/seal.png')).buffer.asUint8List(),
+    );
+    _proposalImage = pw.MemoryImage(
+      (await rootBundle.load('assets/images/proposal_bg.jpg')).buffer.asUint8List(),
+    );
+
     final pdf = pw.Document(
       theme: pw.ThemeData.withFont(
         base: pw.Font.helvetica(),
@@ -138,11 +156,14 @@ class PropertyInspectionPdfGenerator {
       margin: pw.EdgeInsets.zero,
       build: (ctx) => pw.Stack(
         children: [
-          // Dark green background
+          // Background image
           pw.Container(
             width: double.infinity,
             height: double.infinity,
-            color: PdfColor.fromInt(0xFF1B3A2F),
+            child: pw.Image(
+              _proposalImage,
+              fit: pw.BoxFit.cover,
+            ),
           ),
 
           // Year badge top-right
@@ -324,7 +345,8 @@ class PropertyInspectionPdfGenerator {
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(
-                        'Dear  ${data.clientName}',
+                        'Dear Client,',
+                        // 'Dear  ${data.clientName}',
                         style: pw.TextStyle(
                           fontSize: 13,
                           fontWeight: pw.FontWeight.bold,
@@ -585,14 +607,23 @@ class PropertyInspectionPdfGenerator {
                 ),
                 pw.SizedBox(height: 12),
 
-                // Client details list
-                _detailRow('Client name', data.clientName),
-                _detailRow('Unit No', data.unitNo),
-                _detailRow('Location', data.location),
-                _detailRow('Email', data.email),
-                _detailRow('Sqft area', data.sqftArea),
-                _detailRow('Phone', data.phone),
-                _detailRow('Bedroom', data.bedroom),
+                // Client details quick text
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(12),
+                  width: double.infinity,
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: AppTheme.midGrey, width: 0.5),
+                    color: AppTheme.lightGrey,
+                  ),
+                  child: pw.Text(
+                    data.clientDetailsText,
+                    style: const pw.TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.darkText,
+                      lineSpacing: 2,
+                    ),
+                  ),
+                ),
 
                 pw.SizedBox(height: 28),
 
@@ -640,7 +671,7 @@ class PropertyInspectionPdfGenerator {
                       ])),
 
                       // Empty row for visual spacing
-                      _tableRow(['', '', '', '', '']),
+                      // _tableRow(['', '', '', '', '']),
 
                       // Totals
                       _totalRow('Subtotal', data.subtotal.toStringAsFixed(2)),
@@ -710,6 +741,10 @@ class PropertyInspectionPdfGenerator {
                 pw.Text('Branch Name: Rak Bank', style: bodyStyle),
                 pw.SizedBox(height: 8),
                 pw.Text('Emaar Business Park', style: bodyStyle),
+                pw.Align(
+                  alignment: pw.Alignment.centerRight,
+                  child: pw.Image(_sealImage, width: 100),
+                ),
               ],
             ),
           ),
@@ -723,32 +758,8 @@ class PropertyInspectionPdfGenerator {
   // ----------------------------------------------------------
 
   pw.Widget _buildLogo() {
-    return pw.Image(
-      pw.MemoryImage(
-        File('assets/images/logo.png').readAsBytesSync(),
-      ),
-      width: 100, // Adjust the width as needed
-    );
+    return pw.Image(_logoImage, width: 100);
   }
-  // pw.Widget _buildLogo() {
-  //   return pw.Column(
-  //     crossAxisAlignment: pw.CrossAxisAlignment.start,
-  //     children: [
-  //       pw.Text(
-  //         'PROPERTY',
-  //         style: pw.TextStyle(color: AppTheme.brandGreen, fontSize: 11, fontWeight: pw.FontWeight.bold),
-  //       ),
-  //       pw.Text(
-  //         'INSPECTION DXB',
-  //         style: pw.TextStyle(color: AppTheme.brandGreen, fontSize: 11, fontWeight: pw.FontWeight.bold),
-  //       ),
-  //       pw.Text(
-  //         'RA PROPERTY OBSERVER LLC',
-  //         style: const pw.TextStyle(color: AppTheme.white, fontSize: 7),
-  //       ),
-  //     ],
-  //   );
-  // }
 
   pw.Widget _pageHeader() {
     return pw.Container(
@@ -774,7 +785,7 @@ class PropertyInspectionPdfGenerator {
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Text('• ', style: const pw.TextStyle(fontSize: 10, color: AppTheme.darkText)),
+          pw.Text('* ', style: const pw.TextStyle(fontSize: 10, color: AppTheme.darkText)),
           pw.Expanded(
             child: pw.Text(text, style: const pw.TextStyle(fontSize: 10, color: AppTheme.darkText)),
           ),
