@@ -1014,26 +1014,26 @@ class _PreviewScreenState extends State<PreviewScreen> {
         _generatedFile = savedFile;
         _isGenerating = false;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('PDF saved: $fileName'),
-            backgroundColor: kPrimaryEmerald,
-            behavior: SnackBarBehavior.floating,
-            action: SnackBarAction(
-              label: 'Share',
-              textColor: Colors.white,
-              onPressed: () {
-                // 1. Immediately hide the snackbar
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-                // 2. Execute your share logic
-                _shareFile();
-              },
-            ),
-          ),
-        );
-      }
+      // if (mounted) {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     SnackBar(
+      //       content: Text('PDF saved: $fileName'),
+      //       backgroundColor: kPrimaryEmerald,
+      //       behavior: SnackBarBehavior.floating,
+      //       action: SnackBarAction(
+      //         label: 'Share',
+      //         textColor: Colors.white,
+      //         onPressed: () {
+      //           // 1. Immediately hide the snackbar
+      //           ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      //
+      //           // 2. Execute your share logic
+      //           _shareFile();
+      //         },
+      //       ),
+      //     ),
+      //   );
+      // }
       // if (mounted) {
       //   ScaffoldMessenger.of(context).showSnackBar(
       //     SnackBar(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'invoice_model.dart';
+import 'invoice_number_service.dart';
 import 'step2_line_items.dart';
 
 class Step1InvoiceDetails extends StatefulWidget {
@@ -45,6 +46,35 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
     _sqftCtrl = TextEditingController(text: _invoice.sqft);
     _richTextClientDetailsCtrl = TextEditingController(text: _invoice.richTextClientDetails);
     _useRichTextMode = _invoice.useRichTextClientDetails;
+    _loadLastInvoiceNumber();
+  }
+
+  /// Load the last persisted invoice number and pre-fill both fields.
+  Future<void> _loadLastInvoiceNumber() async {
+    final lastNum = await InvoiceNumberService.getLastInvoiceNumber();
+    final formatted = InvoiceNumberService.formatFull(lastNum);
+    final refCode = 'ZPI2025-${lastNum.toString().padLeft(5, '0')}';
+    setState(() {
+      _invoiceNumberCtrl.text = formatted;
+      _invoice.invoiceNumber = formatted;
+      _referenceCodeCtrl.text = refCode;
+      _invoice.referenceCode = refCode;
+    });
+  }
+
+  /// Increment the numeric suffix, update both fields, and persist.
+  Future<void> _incrementInvoiceNumber() async {
+    final currentNum = InvoiceNumberService.parseNumber(_invoiceNumberCtrl.text);
+    final nextNum = currentNum + 1;
+    final formatted = InvoiceNumberService.formatFull(nextNum);
+    final refCode = 'ZPI2025-${nextNum.toString().padLeft(5, '0')}';
+    await InvoiceNumberService.saveInvoiceNumber(nextNum);
+    setState(() {
+      _invoiceNumberCtrl.text = formatted;
+      _invoice.invoiceNumber = formatted;
+      _referenceCodeCtrl.text = refCode;
+      _invoice.referenceCode = refCode;
+    });
   }
 
   @override
@@ -107,6 +137,10 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
       _invoice.sqft = _sqftCtrl.text.trim();
       _invoice.useRichTextClientDetails = _useRichTextMode;
       _invoice.richTextClientDetails = _richTextClientDetailsCtrl.text.trim();
+
+      // Persist the current invoice number (handles manual edits too)
+      final currentNum = InvoiceNumberService.parseNumber(_invoice.invoiceNumber);
+      InvoiceNumberService.saveInvoiceNumber(currentNum);
 
       _invoice.additionalClientFields = _additionalFieldControllers.map((m) {
         return {
@@ -236,11 +270,38 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
 
                     // Invoice Number
                     _buildLabel('INVOICE NUMBER'),
-                    _buildTextField(
-                      controller: _invoiceNumberCtrl,
-                      hint: '2025-INV00693',
-                      validator: (v) =>
-                          v!.isEmpty ? 'Invoice number required' : null,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTextField(
+                            controller: _invoiceNumberCtrl,
+                            hint: '2025-INV00693',
+                            validator: (v) =>
+                                v!.isEmpty ? 'Invoice number required' : null,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1565C0),
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF1565C0).withOpacity(0.3),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            onPressed: _incrementInvoiceNumber,
+                            icon: const Icon(Icons.add, color: Colors.white),
+                            tooltip: 'Increment Invoice Number',
+                            padding: const EdgeInsets.all(10),
+                            constraints: const BoxConstraints(),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
 
