@@ -87,15 +87,9 @@ class InvoiceModel {
             [
               ServiceItem(
                 itemName: 'Inspection for De-snagging',
-                unit: '2BHK',
+                unit: '',
                 noOfUnits: 1,
-                perUnit: 850,
-              ),
-              ServiceItem(
-                itemName: 'Property Inspection Charges',
-                unit: '--',
-                noOfUnits: 0,
-                perUnit: 0,
+                perUnit: 0.0,
               ),
             ];
 

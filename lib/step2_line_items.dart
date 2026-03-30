@@ -122,6 +122,8 @@ class _Step2LineItemsState extends State<Step2LineItems> with AutomaticKeepAlive
 
   Future<void> _generateProposal() async {
     _syncAndCalculate();
+    if (!_validateItems()) return;
+    
     setState(() => _isGeneratingProposal = true);
 
     try {
@@ -168,6 +170,8 @@ class _Step2LineItemsState extends State<Step2LineItems> with AutomaticKeepAlive
 
   void _goToPreview() {
     _syncAndCalculate();
+    if (!_validateItems()) return;
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -619,6 +623,32 @@ class _Step2LineItemsState extends State<Step2LineItems> with AutomaticKeepAlive
     );
   }
 
+  bool _validateItems() {
+    for (int i = 0; i < _itemControllersList.length; i++) {
+      final ctrl = _itemControllersList[i];
+      if (ctrl.unitCtrl.text.trim().isEmpty) {
+        _showValidationError('Please enter UNIT for Item ${i + 1}');
+        return false;
+      }
+      final perUnitStr = ctrl.perUnitCtrl.text.trim();
+      if (perUnitStr.isEmpty || (double.tryParse(perUnitStr) ?? 0.0) <= 0) {
+        _showValidationError('Please enter PER UNIT price for Item ${i + 1}');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void _showValidationError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Widget _buildServiceItemCard(int index) {
     final ctrl = _itemControllersList[index];
     return Container(
@@ -783,8 +813,8 @@ class _ItemControllers {
     return _ItemControllers(
       nameCtrl: TextEditingController(text: item.itemName),
       unitCtrl: TextEditingController(text: item.unit),
-      unitsCtrl: TextEditingController(text: item.noOfUnits.toString()),
-      perUnitCtrl: TextEditingController(text: item.perUnit.toString()),
+      unitsCtrl: TextEditingController(text: item.noOfUnits > 0 ? item.noOfUnits.toString() : '1'),
+      perUnitCtrl: TextEditingController(text: item.perUnit > 0 ? item.perUnit.toString() : ''),
     );
   }
 
