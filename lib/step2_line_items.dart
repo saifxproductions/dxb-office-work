@@ -8,13 +8,21 @@ import 'property_inspection_pdf_generator.dart';
 
 class Step2LineItems extends StatefulWidget {
   final InvoiceModel invoice;
-  const Step2LineItems({super.key, required this.invoice});
+  final PageController pageController;
+
+  const Step2LineItems({
+    super.key, 
+    required this.invoice,
+    required this.pageController,
+  });
 
   @override
   State<Step2LineItems> createState() => _Step2LineItemsState();
 }
 
-class _Step2LineItemsState extends State<Step2LineItems> {
+class _Step2LineItemsState extends State<Step2LineItems> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   late List<_ItemControllers> _itemControllersList;
 
   // Terms controllers
@@ -170,6 +178,7 @@ class _Step2LineItemsState extends State<Step2LineItems> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     _syncAndCalculate();
 
     return Scaffold(
@@ -179,9 +188,14 @@ class _Step2LineItemsState extends State<Step2LineItems> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            widget.pageController.previousPage(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          },
         ),
-        title: Row(
+         title: Row(
           children: [
             Container(
               width: 36,

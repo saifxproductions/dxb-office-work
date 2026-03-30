@@ -121,7 +121,7 @@
 //   }
 // }
 
-import 'package:dxb_office_work/step1_invoice_details.dart';
+import 'package:dxb_office_work/main_form.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -141,7 +141,7 @@ class ProformaApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Roboto',
       ),
-      home: const Step1InvoiceDetails(),
+      home: const MainForm(),
     );
   }
 }

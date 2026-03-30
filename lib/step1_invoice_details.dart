@@ -6,15 +6,24 @@ import 'invoice_number_service.dart';
 import 'step2_line_items.dart';
 
 class Step1InvoiceDetails extends StatefulWidget {
-  const Step1InvoiceDetails({super.key});
+  final InvoiceModel invoice;
+  final PageController pageController;
+  
+  const Step1InvoiceDetails({
+    super.key,
+    required this.invoice,
+    required this.pageController,
+  });
 
   @override
   State<Step1InvoiceDetails> createState() => _Step1InvoiceDetailsState();
 }
 
-class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
+class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> with AutomaticKeepAliveClientMixin {
   final _formKey = GlobalKey<FormState>();
-  final InvoiceModel _invoice = InvoiceModel();
+
+  @override
+  bool get wantKeepAlive => true;
 
   late TextEditingController _invoiceNumberCtrl;
   late TextEditingController _referenceCodeCtrl;
@@ -34,19 +43,19 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
   @override
   void initState() {
     super.initState();
-    _invoiceNumberCtrl = TextEditingController(text: _invoice.invoiceNumber);
-    _referenceCodeCtrl = TextEditingController(text: _invoice.referenceCode);
+    _invoiceNumberCtrl = TextEditingController(text: widget.invoice.invoiceNumber);
+    _referenceCodeCtrl = TextEditingController(text: widget.invoice.referenceCode);
     _issueDateCtrl = TextEditingController(
-        text: DateFormat('MM/dd/yyyy').format(_invoice.issueDate));
-    _clientNameCtrl = TextEditingController(text: _invoice.clientName);
-    _unitCtrl = TextEditingController(text: _invoice.unit);
-    _bedroomsCtrl = TextEditingController(text: _invoice.noOfBedrooms);
-    _locationCtrl = TextEditingController(text: _invoice.location);
-    _emailCtrl = TextEditingController(text: _invoice.email);
-    _phoneCtrl = TextEditingController(text: _invoice.phoneNo);
-    _sqftCtrl = TextEditingController(text: _invoice.sqft);
-    _richTextClientDetailsCtrl = TextEditingController(text: _invoice.richTextClientDetails);
-    _useRichTextMode = _invoice.useRichTextClientDetails;
+        text: DateFormat('MM/dd/yyyy').format(widget.invoice.issueDate));
+    _clientNameCtrl = TextEditingController(text: widget.invoice.clientName);
+    _unitCtrl = TextEditingController(text: widget.invoice.unit);
+    _bedroomsCtrl = TextEditingController(text: widget.invoice.noOfBedrooms);
+    _locationCtrl = TextEditingController(text: widget.invoice.location);
+    _emailCtrl = TextEditingController(text: widget.invoice.email);
+    _phoneCtrl = TextEditingController(text: widget.invoice.phoneNo);
+    _sqftCtrl = TextEditingController(text: widget.invoice.sqft);
+    _richTextClientDetailsCtrl = TextEditingController(text: widget.invoice.richTextClientDetails);
+    _useRichTextMode = widget.invoice.useRichTextClientDetails;
     _loadLastInvoiceNumber();
   }
 
@@ -57,9 +66,9 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
     final refCode = 'ZPI2025-${lastNum.toString().padLeft(5, '0')}';
     setState(() {
       _invoiceNumberCtrl.text = formatted;
-      _invoice.invoiceNumber = formatted;
+      widget.invoice.invoiceNumber = formatted;
       _referenceCodeCtrl.text = refCode;
-      _invoice.referenceCode = refCode;
+      widget.invoice.referenceCode = refCode;
     });
   }
 
@@ -72,9 +81,9 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
     await InvoiceNumberService.saveInvoiceNumber(nextNum);
     setState(() {
       _invoiceNumberCtrl.text = formatted;
-      _invoice.invoiceNumber = formatted;
+      widget.invoice.invoiceNumber = formatted;
       _referenceCodeCtrl.text = refCode;
-      _invoice.referenceCode = refCode;
+      widget.invoice.referenceCode = refCode;
     });
   }
 
@@ -97,13 +106,13 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _invoice.issueDate,
+      initialDate: widget.invoice.issueDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
     );
     if (picked != null) {
       setState(() {
-        _invoice.issueDate = picked;
+        widget.invoice.issueDate = picked;
         _issueDateCtrl.text = DateFormat('MM/dd/yyyy').format(picked);
       });
     }
@@ -139,40 +148,39 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
 
   void _proceedToStep2() {
     if (_formKey.currentState!.validate()) {
-      _invoice.invoiceNumber = _invoiceNumberCtrl.text.trim();
-      _invoice.referenceCode = _referenceCodeCtrl.text.trim();
-      _invoice.clientName = _clientNameCtrl.text.trim();
-      _invoice.unit = _unitCtrl.text.trim();
-      _invoice.noOfBedrooms = _bedroomsCtrl.text.trim();
-      _invoice.location = _locationCtrl.text.trim();
-      _invoice.email = _emailCtrl.text.trim();
-      _invoice.phoneNo = _phoneCtrl.text.trim();
-      _invoice.sqft = _sqftCtrl.text.trim();
-      _invoice.useRichTextClientDetails = _useRichTextMode;
-      _invoice.richTextClientDetails = _richTextClientDetailsCtrl.text.trim();
+      widget.invoice.invoiceNumber = _invoiceNumberCtrl.text.trim();
+      widget.invoice.referenceCode = _referenceCodeCtrl.text.trim();
+      widget.invoice.clientName = _clientNameCtrl.text.trim();
+      widget.invoice.unit = _unitCtrl.text.trim();
+      widget.invoice.noOfBedrooms = _bedroomsCtrl.text.trim();
+      widget.invoice.location = _locationCtrl.text.trim();
+      widget.invoice.email = _emailCtrl.text.trim();
+      widget.invoice.phoneNo = _phoneCtrl.text.trim();
+      widget.invoice.sqft = _sqftCtrl.text.trim();
+      widget.invoice.useRichTextClientDetails = _useRichTextMode;
+      widget.invoice.richTextClientDetails = _richTextClientDetailsCtrl.text.trim();
 
       // Persist the current invoice number (handles manual edits too)
-      final currentNum = InvoiceNumberService.parseNumber(_invoice.invoiceNumber);
+      final currentNum = InvoiceNumberService.parseNumber(widget.invoice.invoiceNumber);
       InvoiceNumberService.saveInvoiceNumber(currentNum);
 
-      _invoice.additionalClientFields = _additionalFieldControllers.map((m) {
+      widget.invoice.additionalClientFields = _additionalFieldControllers.map((m) {
         return {
           'label': m['label']!.text.trim(),
           'value': m['value']!.text.trim(),
         };
       }).toList();
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => Step2LineItems(invoice: _invoice),
-        ),
+      widget.pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -380,18 +388,18 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            _invoice.companyName,
+                            widget.invoice.companyName,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                             ),
                           ),
                           Text(
-                            _invoice.companyAddress,
+                            widget.invoice.companyAddress,
                             style: const TextStyle(
                                 fontSize: 13, color: Colors.grey),
                           ),
-                          const SizedBox(height: 6),
+                           const SizedBox(height: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
@@ -400,7 +408,7 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              'TRN: ${_invoice.companyTRN}',
+                              'TRN: ${widget.invoice.companyTRN}',
                               style: const TextStyle(fontSize: 12),
                             ),
                           ),
@@ -779,10 +787,10 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
     }).join('\n'); // Join lines back together
   }
   void _showEditCompanyDialog() {
-    final nameCtrl = TextEditingController(text: _invoice.companyName);
-    final addressCtrl = TextEditingController(text: _invoice.companyAddress);
-    final trnCtrl = TextEditingController(text: _invoice.companyTRN);
-
+    final nameCtrl = TextEditingController(text: widget.invoice.companyName);
+    final addressCtrl = TextEditingController(text: widget.invoice.companyAddress);
+    final trnCtrl = TextEditingController(text: widget.invoice.companyTRN);
+ nominations:
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -813,11 +821,11 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
           ElevatedButton(
             onPressed: () {
               setState(() {
-                _invoice.companyName = nameCtrl.text;
-                _invoice.companyAddress = addressCtrl.text;
-                _invoice.companyTRN = trnCtrl.text;
+                widget.invoice.companyName = nameCtrl.text;
+                widget.invoice.companyAddress = addressCtrl.text;
+                widget.invoice.companyTRN = trnCtrl.text;
               });
-              Navigator.pop(context);
+ nominations:              Navigator.pop(context);
             },
             child: const Text('Save'),
           ),
