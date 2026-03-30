@@ -574,6 +574,8 @@ class PropertyInspectionPdfGenerator {
               ],
             ),
           ),
+          pw.Spacer(),
+          _buildFooter(),
         ],
       ),
     );
@@ -701,6 +703,8 @@ class PropertyInspectionPdfGenerator {
               ],
             ),
           ),
+          pw.Spacer(),
+          _buildFooter(),
         ],
       ),
     );
@@ -748,6 +752,8 @@ class PropertyInspectionPdfGenerator {
               ],
             ),
           ),
+          pw.Spacer(),
+          _buildFooter(),
         ],
       ),
     );
@@ -886,6 +892,30 @@ class PropertyInspectionPdfGenerator {
           ),
         ],
       ),
+    );
+  }
+
+  pw.Widget _buildFooter() {
+    return pw.Column(
+      children: [
+        pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 40),
+          child: pw.Divider(color: AppTheme.brandGreen, thickness: 1.5),
+        ),
+        pw.SizedBox(height: 6),
+        pw.Center(
+          child: pw.Text(
+            'Office 201, Insurance Building, Dubai , Dubai UAE Tel: +971561300654 | www.propertyinspectiondxb.com',
+            style: pw.TextStyle(
+              fontSize: 8,
+              color: PdfColors.grey600,
+              fontWeight: pw.FontWeight.bold,
+            ),
+            textAlign: pw.TextAlign.center,
+          ),
+        ),
+        pw.SizedBox(height: 20),
+      ],
     );
   }
 
