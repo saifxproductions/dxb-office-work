@@ -63,7 +63,7 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> with Automati
   Future<void> _loadLastInvoiceNumber() async {
     final lastNum = await InvoiceNumberService.getLastInvoiceNumber();
     final formatted = InvoiceNumberService.formatFull(lastNum);
-    final refCode = 'ZPI2025-${lastNum.toString().padLeft(5, '0')}';
+    final refCode = 'ZPI2026-${lastNum.toString().padLeft(5, '0')}';
     setState(() {
       _invoiceNumberCtrl.text = formatted;
       widget.invoice.invoiceNumber = formatted;
@@ -77,7 +77,7 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> with Automati
     final currentNum = InvoiceNumberService.parseNumber(_invoiceNumberCtrl.text);
     final nextNum = currentNum + 1;
     final formatted = InvoiceNumberService.formatFull(nextNum);
-    final refCode = 'ZPI2025-${nextNum.toString().padLeft(5, '0')}';
+    final refCode = 'ZPI2026-${nextNum.toString().padLeft(5, '0')}';
     await InvoiceNumberService.saveInvoiceNumber(nextNum);
     setState(() {
       _invoiceNumberCtrl.text = formatted;
@@ -296,7 +296,7 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> with Automati
                         Expanded(
                           child: _buildTextField(
                             controller: _invoiceNumberCtrl,
-                            hint: '2025-INV00693',
+                            hint: '2026-INV00693',
                             validator: (v) =>
                                 v!.isEmpty ? 'Invoice number required' : null,
                           ),
@@ -330,7 +330,7 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> with Automati
                     _buildLabel('REFERENCE CODE'),
                     _buildTextField(
                       controller: _referenceCodeCtrl,
-                      hint: 'ZPI2025-00693',
+                      hint: 'ZPI2026-00693',
                     ),
                     const SizedBox(height: 12),
 

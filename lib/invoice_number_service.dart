@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class InvoiceNumberService {
   static const String _key = 'last_invoice_number';
   static const int _defaultNumber = 693;
-  static const String _prefix = '2025-INV';
+  static const String _prefix = '2026-INV';
 
   /// Load the last stored invoice number (numeric part only).
   static Future<int> getLastInvoiceNumber() async {
