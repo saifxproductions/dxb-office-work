@@ -1122,7 +1122,21 @@ class PdfGeneratorService {
     );
 
     final output = await getTemporaryDirectory();
-    final file = File("${output.path}/Tax_Invoice_${invoice.invoiceNumberShort}.pdf");
+    
+    // Determine Client Name for File: use name field if it exists, otherwise take first line of rich text.
+    String nameForFile = invoice.clientName;
+    if (nameForFile.isEmpty && invoice.richTextClientDetails.isNotEmpty) {
+      nameForFile = invoice.richTextClientDetails.split('\n').first;
+    }
+    
+    final sanitizedName = nameForFile
+        .toUpperCase()
+        .replaceAll(RegExp(r'[^A-Z0-9 ]'), '')
+        .trim()
+        .replaceAll(' ', '_');
+
+    final fileName = 'Tax_Invoice_${invoice.invoiceNumberShort}_${sanitizedName.isNotEmpty ? sanitizedName : 'Client'}.pdf';
+    final file = File("${output.path}/$fileName");
     await file.writeAsBytes(await pdf.save());
     return file;
   }

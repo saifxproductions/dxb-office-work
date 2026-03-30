@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'invoice_model.dart';
 import 'invoice_number_service.dart';
@@ -105,6 +106,18 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
         _invoice.issueDate = picked;
         _issueDateCtrl.text = DateFormat('MM/dd/yyyy').format(picked);
       });
+    }
+  }
+
+  /// Paste text from clipboard into the rich text client details controller.
+  Future<void> _pasteFromClipboard() async {
+    final ClipboardData? data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (data != null && data.text != null) {
+      setState(() {
+        _richTextClientDetailsCtrl.text = data.text!;
+      });
+      // Also trigger cleaning/formatting automatically if needed?
+      // For now, just paste.
     }
   }
 
@@ -445,23 +458,46 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildLabel('CLIENT DETAILS (PASTE HERE)'),
+                          GestureDetector(
+                            onTap: _pasteFromClipboard,
+                            child: _buildLabel('CLIENT DETAILX'),
+                          ),
                           Row(
                             children: [
+                              // --- PASTE BUTTON ---
+                              TextButton.icon(
+                                onPressed: _pasteFromClipboard,
+                                icon: const Icon(Icons.content_paste,
+                                    size: 16, color: Color(0xFF1565C0)),
+                                label: const Text('Paste'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF1565C0),
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+
                               // --- NEW: CLEAN & FORMAT BUTTON (SaaS Magic Wand) ---
                               TextButton.icon(
                                 onPressed: () {
-                                  final currentText = _richTextClientDetailsCtrl.text;
-                                  final formatted = _processSaaSFormatting(currentText);
+                                  final currentText =
+                                      _richTextClientDetailsCtrl.text;
+                                  final formatted =
+                                      _processSaaSFormatting(currentText);
                                   setState(() {
                                     _richTextClientDetailsCtrl.text = formatted;
                                   });
                                 },
-                                icon: const Icon(Icons.auto_fix_high, size: 16, color: Color(0xFF0D9488)), // Emerald Green
+                                icon: const Icon(Icons.auto_fix_high,
+                                    size: 16,
+                                    color: Color(0xFF0D9488)), // Emerald Green
                                 label: const Text('Clean'),
                                 style: TextButton.styleFrom(
                                   foregroundColor: const Color(0xFF0D9488),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
                                   visualDensity: VisualDensity.compact,
                                 ),
                               ),
@@ -471,25 +507,37 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> {
                               TextButton.icon(
                                 onPressed: () {
                                   final text = _richTextClientDetailsCtrl.text;
-                                  final selection = _richTextClientDetailsCtrl.selection;
-                                  if (selection.isValid && !selection.isCollapsed) {
-                                    final selectedText = text.substring(selection.start, selection.end);
-                                    final newText = text.replaceRange(selection.start, selection.end, '**$selectedText**');
+                                  final selection =
+                                      _richTextClientDetailsCtrl.selection;
+                                  if (selection.isValid &&
+                                      !selection.isCollapsed) {
+                                    final selectedText = text.substring(
+                                        selection.start, selection.end);
+                                    final newText = text.replaceRange(
+                                        selection.start,
+                                        selection.end,
+                                        '**$selectedText**');
                                     _richTextClientDetailsCtrl.text = newText;
-                                    _richTextClientDetailsCtrl.selection = TextSelection.collapsed(
-                                        offset: selection.start + 2 + selectedText.length + 2);
+                                    _richTextClientDetailsCtrl.selection =
+                                        TextSelection.collapsed(
+                                            offset: selection.start +
+                                                2 +
+                                                selectedText.length +
+                                                2);
                                   } else {
                                     final newText = text + ' ****';
                                     _richTextClientDetailsCtrl.text = newText;
                                     _richTextClientDetailsCtrl.selection =
-                                        TextSelection.collapsed(offset: newText.length - 2);
+                                        TextSelection.collapsed(
+                                            offset: newText.length - 2);
                                   }
                                 },
                                 icon: const Icon(Icons.format_bold, size: 18),
                                 label: const Text('Bold'),
                                 style: TextButton.styleFrom(
                                   foregroundColor: const Color(0xFF1565C0),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
                                   visualDensity: VisualDensity.compact,
                                 ),
                               ),

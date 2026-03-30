@@ -121,11 +121,20 @@ class _Step2LineItemsState extends State<Step2LineItems> {
       final generator = PropertyInspectionPdfGenerator(data: proposalData);
 
       final dir = await getTemporaryDirectory();
-      final clientName = widget.invoice.clientName
+      
+      // Determine Client Name for File: use name field if it exists, otherwise take first line of rich text.
+      String nameForFile = widget.invoice.clientName;
+      if (nameForFile.isEmpty && widget.invoice.richTextClientDetails.isNotEmpty) {
+        nameForFile = widget.invoice.richTextClientDetails.split('\n').first;
+      }
+      
+      final sanitizedName = nameForFile
           .toUpperCase()
           .replaceAll(RegExp(r'[^A-Z0-9 ]'), '')
-          .trim();
-      final fileName = 'Proposal_${clientName.isNotEmpty ? clientName : 'Client'}.pdf';
+          .trim()
+          .replaceAll(' ', '_');
+          
+      final fileName = 'Proposal_${widget.invoice.invoiceNumberShort}_${sanitizedName.isNotEmpty ? sanitizedName : 'Client'}.pdf';
       final outputPath = '${dir.path}/$fileName';
 
       final file = await generator.generate(outputPath);

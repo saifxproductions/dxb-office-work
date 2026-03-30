@@ -1002,12 +1002,20 @@ class _PreviewScreenState extends State<PreviewScreen> {
     try {
       final file = await PdfGeneratorService.generateInvoicePdf(widget.invoice);
       final docsDir = await getApplicationDocumentsDirectory();
-      final invoiceNum = widget.invoice.invoiceNumberShort;
-      final clientName = widget.invoice.clientName
+      
+      // Determine Client Name for File: use name field if it exists, otherwise take first line of rich text.
+      String nameForFile = widget.invoice.clientName;
+      if (nameForFile.isEmpty && widget.invoice.richTextClientDetails.isNotEmpty) {
+        nameForFile = widget.invoice.richTextClientDetails.split('\n').first;
+      }
+      
+      final sanitizedName = nameForFile
           .toUpperCase()
           .replaceAll(RegExp(r'[^A-Z0-9 ]'), '')
-          .trim();
-      final fileName = 'Tax Invoice_${invoiceNum}_$clientName.pdf';
+          .trim()
+          .replaceAll(' ', '_');
+
+      final fileName = 'Tax_Invoice_${widget.invoice.invoiceNumberShort}_${sanitizedName.isNotEmpty ? sanitizedName : 'Client'}.pdf';
       final savedFile = await file.copy('${docsDir.path}/$fileName');
 
       setState(() {
@@ -1061,12 +1069,19 @@ class _PreviewScreenState extends State<PreviewScreen> {
       await _generateAndSave();
       if (_generatedFile == null) return;
     }
-    final invoiceNum = widget.invoice.invoiceNumberShort;
-    final clientName = widget.invoice.clientName
+    // Determine Client Name for File: use name field if it exists, otherwise take first line of rich text.
+    String nameForFile = widget.invoice.clientName;
+    if (nameForFile.isEmpty && widget.invoice.richTextClientDetails.isNotEmpty) {
+      nameForFile = widget.invoice.richTextClientDetails.split('\n').first;
+    }
+    
+    final sanitizedName = nameForFile
         .toUpperCase()
         .replaceAll(RegExp(r'[^A-Z0-9 ]'), '')
-        .trim();
-    final fileName = 'Tax Invoice_${invoiceNum}_$clientName.pdf';
+        .trim()
+        .replaceAll(' ', '_');
+
+    final fileName = 'Tax_Invoice_${widget.invoice.invoiceNumberShort}_${sanitizedName.isNotEmpty ? sanitizedName : 'Client'}.pdf';
 
     await Share.shareXFiles(
       [XFile(_generatedFile!.path)],
