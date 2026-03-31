@@ -19,6 +19,7 @@ dependencies:
   intl: ^0.20.2
   open_filex: ^4.7.0
   shared_preferences: ^2.5.0
+  number_to_words_english: ^3.0.4
 
 dev_dependencies:
   flutter_test:
