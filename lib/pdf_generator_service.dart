@@ -828,23 +828,23 @@ class PdfGeneratorService {
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
                             // Badge Style Label
-                            // pw.Container(
-                            //   padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Tightened
-                            //   decoration: pw.BoxDecoration(
-                            //     color: PdfColor.fromInt(0xFFE8F5E9),
-                            //     borderRadius: pw.BorderRadius.circular(4),
-                            //   ),
-                            //   child: pw.Text(
-                            //     'PROFORMA INVOICE',
-                            //     style: pw.TextStyle(
-                            //       color: PdfColor.fromInt(0xFF2E7D32),
-                            //       fontWeight: pw.FontWeight.bold,
-                            //       fontSize: 7, // Smaller font
-                            //       letterSpacing: 1.0,
-                            //     ),
-                            //   ),
-                            // ),
-                            // pw.SizedBox(height: 8), // Minimal gap after badge
+                            pw.Container(
+                              padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Tightened
+                              decoration: pw.BoxDecoration(
+                                color: PdfColor.fromInt(0xFFE8F5E9),
+                                borderRadius: pw.BorderRadius.circular(4),
+                              ),
+                              child: pw.Text(
+                                'Tax Invoice',
+                                style: pw.TextStyle(
+                                  color: PdfColor.fromInt(0xFF2E7D32),
+                                  fontWeight: pw.FontWeight.bold,
+                                  fontSize: 7, // Smaller font
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ),
+                            pw.SizedBox(height: 8), // Minimal gap after badge
 
                             _modernMetaRow('Date', DateFormat('MMM dd, yyyy').format(invoice.issueDate)),
                             pw.SizedBox(height: 6), // Tight spacing between blocks
@@ -957,7 +957,7 @@ class PdfGeneratorService {
                       else ...[
                         pw.Text(invoice.clientName.toUpperCase(),
                             style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14, color: pdfDarkSlate)),
-                        pw.Text('UNIT - ${invoice.unit}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                        pw.Text('Unit: ${invoice.unit}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
                         pw.Text('Location: ${invoice.location}',
                             style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
                         pw.Text('No. of bedrooms: ${invoice.noOfBedrooms}', style: const pw.TextStyle(fontSize: 10)),

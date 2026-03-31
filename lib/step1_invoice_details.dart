@@ -277,7 +277,7 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> with Automati
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Proforma Invoice',
+                      'Tax Invoice',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,

@@ -966,8 +966,10 @@ import 'dart:io';
 import 'package:dxb_office_work/pdf_generator_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:printing/printing.dart';
 
 import 'invoice_model.dart';
 
@@ -1064,6 +1066,41 @@ class _PreviewScreenState extends State<PreviewScreen> {
     }
   }
 
+  Future<void> _downloadPdf() async {
+    setState(() {
+      _isGenerating = true;
+      _errorMessage = null;
+    });
+    try {
+      final file = await PdfGeneratorService.generateInvoicePdf(widget.invoice);
+      final bytes = await file.readAsBytes();
+      
+      String nameForFile = widget.invoice.clientName;
+      if (nameForFile.isEmpty && widget.invoice.richTextClientDetails.isNotEmpty) {
+        nameForFile = widget.invoice.richTextClientDetails.split('\n').first;
+      }
+      final sanitizedName = nameForFile
+          .toUpperCase()
+          .replaceAll(RegExp(r'[^A-Z0-9 ]'), '')
+          .trim()
+          .replaceAll(' ', '_');
+
+      final fileName = 'Tax_Invoice_${widget.invoice.invoiceNumberShort}_${sanitizedName.isNotEmpty ? sanitizedName : 'Client'}.pdf';
+
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => bytes,
+        name: fileName,
+      );
+
+      setState(() => _isGenerating = false);
+    } catch (e) {
+      setState(() {
+        _isGenerating = false;
+        _errorMessage = 'Error downloading PDF: ${e.toString()}';
+      });
+    }
+  }
+
   Future<void> _shareFile() async {
     if (_generatedFile == null) {
       await _generateAndSave();
@@ -1085,7 +1122,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
     await Share.shareXFiles(
       [XFile(_generatedFile!.path)],
-      text: 'Proforma Invoice - $fileName',
+      text: 'Tax Invoice - $fileName',
       subject: fileName,
     );
   }
@@ -1179,7 +1216,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'PROFORMA INVOICE',
+                                  'TAX INVOICE',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w900,
@@ -1260,7 +1297,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
                                       _buildRichText(inv.richTextClientDetails)
                                     else ...[
                                       Text(inv.clientName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                      Text('UNIT - ${inv.unit}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                      Text('Unit: ${inv.unit}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                                       Text('Location: ${inv.location}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                                       Text('No. of bedrooms: ${inv.noOfBedrooms}', style: const TextStyle(fontSize: 10)),
                                       Text('Email: ${inv.email}', style: const TextStyle(fontSize: 10)),
@@ -1416,11 +1453,11 @@ class _PreviewScreenState extends State<PreviewScreen> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _isGenerating ? null : _generateAndSave,
+                    onPressed: _isGenerating ? null : _downloadPdf,
                     icon: _isGenerating
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                         : Icon(Icons.download_rounded, color: kDarkSlate),
-                    label: Text(_isGenerating ? 'Generating...' : 'Save PDF', style: TextStyle(color: kDarkSlate, fontWeight: FontWeight.bold)),
+                    label: Text(_isGenerating ? 'Generating...' : 'Download PDF', style: TextStyle(color: kDarkSlate, fontWeight: FontWeight.bold)),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       side: BorderSide(color: kBorderColor),

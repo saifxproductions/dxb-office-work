@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/pdf.dart';
 import 'invoice_model.dart';
 import 'preview_screen.dart';
 import 'property_inspection_pdf_generator.dart';
@@ -159,6 +161,52 @@ class _Step2LineItemsState extends State<Step2LineItems> with AutomaticKeepAlive
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error generating proposal: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGeneratingProposal = false);
+    }
+  }
+
+  Future<void> _downloadProposal() async {
+    _syncAndCalculate();
+    if (!_validateItems()) return;
+    
+    setState(() => _isGeneratingProposal = true);
+
+    try {
+      final proposalData = ProposalData.fromInvoiceModel(widget.invoice);
+      final generator = PropertyInspectionPdfGenerator(data: proposalData);
+
+      final dir = await getTemporaryDirectory();
+      
+      String nameForFile = widget.invoice.clientName;
+      if (nameForFile.isEmpty && widget.invoice.richTextClientDetails.isNotEmpty) {
+        nameForFile = widget.invoice.richTextClientDetails.split('\n').first;
+      }
+      final sanitizedName = nameForFile
+          .toUpperCase()
+          .replaceAll(RegExp(r'[^A-Z0-9 ]'), '')
+          .trim()
+          .replaceAll(' ', '_');
+          
+      final fileName = 'Proposal_${widget.invoice.invoiceNumberShort}_${sanitizedName.isNotEmpty ? sanitizedName : 'Client'}.pdf';
+      final outputPath = '${dir.path}/$fileName';
+
+      final file = await generator.generate(outputPath);
+      final bytes = await file.readAsBytes();
+
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => bytes,
+        name: fileName,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error downloading proposal: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -589,8 +637,9 @@ class _Step2LineItemsState extends State<Step2LineItems> with AutomaticKeepAlive
                 ),
                 const SizedBox(width: 8),
                 // Proposal
-                Expanded(
-                  child: ElevatedButton.icon(
+                 Expanded(
+                   flex: 2,
+                   child: ElevatedButton.icon(
                     onPressed: _isGeneratingProposal ? null : _generateProposal,
                     icon: _isGeneratingProposal
                         ? const SizedBox(
@@ -601,10 +650,10 @@ class _Step2LineItemsState extends State<Step2LineItems> with AutomaticKeepAlive
                               color: Colors.white,
                             ),
                           )
-                        : const Icon(Icons.description_outlined, color: Colors.white, size: 18),
+                        : const Icon(Icons.share, color: Colors.white, size: 16),
                     label: Text(
                       _isGeneratingProposal ? 'Wait...' : 'Proposal',
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      style: const TextStyle(color: Colors.white, fontSize: 11),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF00897B),
@@ -613,6 +662,21 @@ class _Step2LineItemsState extends State<Step2LineItems> with AutomaticKeepAlive
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                // New Download Button for Proposal
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.teal[700],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: IconButton(
+                    onPressed: _isGeneratingProposal ? null : _downloadProposal,
+                    icon: _isGeneratingProposal 
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 1.5, color: Colors.white))
+                      : const Icon(Icons.download_rounded, color: Colors.white, size: 20),
+                    tooltip: 'Download Proposal',
                   ),
                 ),
               ],
