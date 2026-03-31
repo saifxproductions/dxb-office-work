@@ -10,6 +10,7 @@ import 'invoice_model.dart';
 import 'invoice_number_service.dart';
 import 'preview_screen.dart';
 import 'property_inspection_pdf_generator.dart';
+import 'proposal_preview_screen.dart';
 
 class UnifiedOfficeForm extends StatefulWidget {
   final InvoiceModel invoice;
@@ -330,6 +331,35 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
       context,
       MaterialPageRoute(
         builder: (_) => PreviewScreen(invoice: widget.invoice),
+      ),
+    );
+  }
+
+  void _goToProposalPreview() {
+    _syncData();
+    if (!_validateAll()) return;
+
+    final proposalData = ProposalData.fromInvoiceModel(widget.invoice);
+    
+    String nameForFile = widget.invoice.richTextClientDetails.isNotEmpty 
+        ? widget.invoice.richTextClientDetails.split('\n').first 
+        : 'Client';
+        
+    final sanitizedName = nameForFile
+        .toUpperCase()
+        .replaceAll(RegExp(r'[^A-Z0-9 ]'), '')
+        .trim()
+        .replaceAll(' ', '_');
+        
+    final fileName = 'Proposal_${widget.invoice.invoiceNumberShort}_${sanitizedName}.pdf';
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProposalPreviewScreen(
+          data: proposalData,
+          fileName: fileName,
+        ),
       ),
     );
   }
@@ -768,15 +798,33 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
             const SizedBox(width: 12),
             Expanded(
               flex: 2,
-              child: ElevatedButton.icon(
-                onPressed: (isReady && !_isGeneratingProposal) ? _generateProposal : null,
-                icon: _isGeneratingProposal ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.share, color: Colors.white, size: 20),
-                label: Text(_isGeneratingProposal ? 'Processing...' : 'Proposal', style: const TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isReady ? const Color(0xFF00897B) : Colors.grey, 
-                  padding: const EdgeInsets.symmetric(vertical: 16), 
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: (isReady && !_isGeneratingProposal) ? _generateProposal : null,
+                      icon: _isGeneratingProposal ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.share, color: Colors.white, size: 20),
+                      label: Text(_isGeneratingProposal ? 'Processing...' : 'Proposal', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isReady ? const Color(0xFF00897B) : Colors.grey, 
+                        padding: const EdgeInsets.symmetric(vertical: 16), 
+                        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12))),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    height: 54, // Match button height
+                    decoration: BoxDecoration(
+                      color: isReady ? const Color(0xFF00695C) : Colors.grey[400],
+                      borderRadius: const BorderRadius.only(topRight: Radius.circular(12), bottomRight: Radius.circular(12)),
+                    ),
+                    child: IconButton(
+                      onPressed: isReady ? _goToProposalPreview : null,
+                      icon: const Icon(Icons.visibility_outlined, color: Colors.white, size: 22),
+                      tooltip: 'Preview Proposal',
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(width: 8),

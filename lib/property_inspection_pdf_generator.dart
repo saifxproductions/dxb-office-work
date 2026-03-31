@@ -108,7 +108,7 @@ class PropertyInspectionPdfGenerator {
 
   PropertyInspectionPdfGenerator({required this.data});
 
-  Future<File> generate(String outputPath) async {
+  Future<Uint8List> buildPdf() async {
     // Load the logo asset once before building pages
     _logoImage = pw.MemoryImage(
       (await rootBundle.load('assets/images/logo.png')).buffer.asUint8List(),
@@ -142,8 +142,13 @@ class PropertyInspectionPdfGenerator {
     // Page 5: Bank Details
     pdf.addPage(_buildBankPage());
 
+    return pdf.save();
+  }
+
+  Future<File> generate(String outputPath) async {
+    final bytes = await buildPdf();
     final file = File(outputPath);
-    await file.writeAsBytes(await pdf.save());
+    await file.writeAsBytes(bytes);
     return file;
   }
 
