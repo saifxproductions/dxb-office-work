@@ -650,7 +650,7 @@ class PropertyInspectionPdfGenerator {
                             pw.Expanded(
                               flex: 3,
                               child: pw.Text(
-                                'Property Snagging & De-snagging',
+                                'Property Snagging/Inspection',
                                 style: pw.TextStyle(
                                   color: AppTheme.white,
                                   fontWeight: pw.FontWeight.bold,
