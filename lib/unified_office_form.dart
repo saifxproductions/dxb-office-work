@@ -45,6 +45,9 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
   late TextEditingController _branchCtrl;
   late TextEditingController _vatCtrl;
   bool _isGeneratingProposal = false;
+  bool _isInvoiceNumberEdited = false;
+  bool _isReferenceCodeEdited = false;
+  bool _isIncrementedThisSession = false;
 
   @override
   void initState() {
@@ -56,6 +59,18 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
     _issueDateCtrl = TextEditingController(
         text: DateFormat('MM/dd/yyyy').format(widget.invoice.issueDate));
     _richTextClientDetailsCtrl = TextEditingController(text: widget.invoice.richTextClientDetails);
+
+    _invoiceNumberCtrl.addListener(() {
+      if (!_isInvoiceNumberEdited) {
+        setState(() => _isInvoiceNumberEdited = true);
+      }
+    });
+    _referenceCodeCtrl.addListener(() {
+      if (!_isReferenceCodeEdited) {
+        setState(() => _isReferenceCodeEdited = true);
+      }
+    });
+
     _loadLastInvoiceNumber();
 
     // Initialize Step 2
@@ -101,14 +116,35 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
 
   Future<void> _loadLastInvoiceNumber() async {
     final lastNum = await InvoiceNumberService.getLastInvoiceNumber();
-    final formatted = InvoiceNumberService.formatFull(lastNum);
-    final refCode = 'ZPI2026-${lastNum.toString().padLeft(5, '0')}';
+    final nextNum = lastNum + 1; // Default to next number
+    final formatted = InvoiceNumberService.formatFull(nextNum);
+    final refCode = 'ZPI2026-${nextNum.toString().padLeft(5, '0')}';
+    
     setState(() {
+      // Temporarily disable listeners during load to avoid marking as edited
+      _isInvoiceNumberEdited = true; 
+      _isReferenceCodeEdited = true;
+      
       _invoiceNumberCtrl.text = formatted;
       widget.invoice.invoiceNumber = formatted;
       _referenceCodeCtrl.text = refCode;
       widget.invoice.referenceCode = refCode;
+      
+      _isInvoiceNumberEdited = false;
+      _isReferenceCodeEdited = false;
+      _isIncrementedThisSession = false;
     });
+  }
+
+  Future<void> _handleAutoIncrement() async {
+    if (_isIncrementedThisSession) return;
+
+    // If invoice number is NOT manually edited, we commit the increment
+    if (!_isInvoiceNumberEdited) {
+      final currentNum = InvoiceNumberService.parseNumber(_invoiceNumberCtrl.text);
+      await InvoiceNumberService.saveInvoiceNumber(currentNum);
+      _isIncrementedThisSession = true;
+    }
   }
 
   Future<void> _incrementInvoiceNumber() async {
@@ -118,10 +154,13 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
     final refCode = 'ZPI2026-${nextNum.toString().padLeft(5, '0')}';
     await InvoiceNumberService.saveInvoiceNumber(nextNum);
     setState(() {
+      _isInvoiceNumberEdited = true;
+      _isReferenceCodeEdited = true;
       _invoiceNumberCtrl.text = formatted;
       widget.invoice.invoiceNumber = formatted;
       _referenceCodeCtrl.text = refCode;
       widget.invoice.referenceCode = refCode;
+      _isIncrementedThisSession = true; // Manual increment counts as consumed for this session
     });
   }
 
@@ -234,6 +273,7 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
   }
 
   Future<void> _generateProposal() async {
+    await _handleAutoIncrement();
     _syncData();
     if (!_validateAll()) return;
     
@@ -279,6 +319,7 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
   }
 
   Future<void> _downloadProposal() async {
+    await _handleAutoIncrement();
     _syncData();
     if (!_validateAll()) return;
     
@@ -323,7 +364,8 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
     }
   }
 
-  void _goToPreview() {
+  void _goToPreview() async {
+    await _handleAutoIncrement();
     _syncData();
     if (!_validateAll()) return;
 
@@ -335,7 +377,8 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
     );
   }
 
-  void _goToProposalPreview() {
+  void _goToProposalPreview() async {
+    await _handleAutoIncrement();
     _syncData();
     if (!_validateAll()) return;
 

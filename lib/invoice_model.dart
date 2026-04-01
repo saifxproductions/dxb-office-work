@@ -86,7 +86,7 @@ class InvoiceModel {
         serviceItems = serviceItems ??
             [
               ServiceItem(
-                itemName: 'Inspection for De-snagging',
+                itemName: 'Property Snagging/Inspection',
                 unit: '',
                 noOfUnits: 1,
                 perUnit: 0.0,
