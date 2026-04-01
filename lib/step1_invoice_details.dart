@@ -296,7 +296,7 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> with Automati
                         Expanded(
                           child: _buildTextField(
                             controller: _invoiceNumberCtrl,
-                            hint: '2026-INV00693',
+                            hint: '2026-INV00748',
                             validator: (v) =>
                                 v!.isEmpty ? 'Invoice number required' : null,
                           ),
@@ -330,7 +330,7 @@ class _Step1InvoiceDetailsState extends State<Step1InvoiceDetails> with Automati
                     _buildLabel('REFERENCE CODE'),
                     _buildTextField(
                       controller: _referenceCodeCtrl,
-                      hint: 'ZPI2026-00693',
+                      hint: 'ZPI2026-00748',
                     ),
                     const SizedBox(height: 12),
 

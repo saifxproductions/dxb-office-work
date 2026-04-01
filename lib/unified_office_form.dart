@@ -65,11 +65,19 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
     _invoiceNumberCtrl.addListener(() {
       if (!_isInvoiceNumberEdited) {
         setState(() => _isInvoiceNumberEdited = true);
+      } else {
+        // Save manual changes immediately as unconsumed baselines
+        final val = InvoiceNumberService.parseNumber(_invoiceNumberCtrl.text);
+        InvoiceNumberService.saveInvoiceNumber(val);
       }
     });
     _referenceCodeCtrl.addListener(() {
       if (!_isReferenceCodeEdited) {
         setState(() => _isReferenceCodeEdited = true);
+      } else {
+        // Save manual changes immediately as unconsumed baselines
+        final val = InvoiceNumberService.parseNumber(_referenceCodeCtrl.text);
+        InvoiceNumberService.saveReferenceNumber(val);
       }
     });
 
@@ -119,25 +127,26 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
   Future<void> _loadLastInvoiceNumber() async {
     final lastInv = await InvoiceNumberService.getLastInvoiceNumber();
     final lastRef = await InvoiceNumberService.getLastReferenceNumber();
+    final invConsumed = await InvoiceNumberService.isInvoiceConsumed();
+    final refConsumed = await InvoiceNumberService.isReferenceConsumed();
     
-    final nextInv = lastInv + 1;
-    final nextRef = lastRef + 1;
+    // Only increment if the number was "consumed" by a generated report
+    final displayInv = invConsumed ? lastInv + 1 : lastInv;
+    final displayRef = refConsumed ? lastRef + 1 : lastRef;
     
-    final formattedInv = InvoiceNumberService.formatFull(nextInv);
-    final formattedRef = InvoiceNumberService.formatRef(nextRef);
+    final formattedInv = InvoiceNumberService.formatFull(displayInv);
+    final formattedRef = InvoiceNumberService.formatRef(displayRef);
     
     setState(() {
-      // Temporarily disable listeners during load to avoid marking as edited
-      _isInvoiceNumberEdited = true; 
-      _isReferenceCodeEdited = true;
+      // Temporarily disable save-on-change during initial load
+      _isInvoiceNumberEdited = false; 
+      _isReferenceCodeEdited = false;
       
       _invoiceNumberCtrl.text = formattedInv;
       widget.invoice.invoiceNumber = formattedInv;
       _referenceCodeCtrl.text = formattedRef;
       widget.invoice.referenceCode = formattedRef;
       
-      _isInvoiceNumberEdited = false;
-      _isReferenceCodeEdited = false;
       _isIncrementedThisSession = false;
     });
   }
@@ -145,13 +154,9 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
   Future<void> _handleAutoIncrement() async {
     if (_isIncrementedThisSession) return;
 
-    // We always save the current state of the fields as the "last used" numbers.
-    // This honors manual edits as the new baseline for future increments.
-    final currentInv = InvoiceNumberService.parseNumber(_invoiceNumberCtrl.text);
-    final currentRef = InvoiceNumberService.parseNumber(_referenceCodeCtrl.text);
-    
-    await InvoiceNumberService.saveInvoiceNumber(currentInv);
-    await InvoiceNumberService.saveReferenceNumber(currentRef);
+    // Mark current numbers as "consumed" so the next session increments them
+    await InvoiceNumberService.markInvoiceConsumed();
+    await InvoiceNumberService.markReferenceConsumed();
     
     _isIncrementedThisSession = true;
   }
@@ -166,7 +171,7 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
     final formattedInv = InvoiceNumberService.formatFull(nextInv);
     final formattedRef = InvoiceNumberService.formatRef(nextRef);
     
-    // We save immediately on manual increment to ensure the new baseline is captured
+    // Save the new values as unconsumed baselines
     await InvoiceNumberService.saveInvoiceNumber(nextInv);
     await InvoiceNumberService.saveReferenceNumber(nextRef);
     
@@ -179,7 +184,7 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
       _referenceCodeCtrl.text = formattedRef;
       widget.invoice.referenceCode = formattedRef;
       
-      _isIncrementedThisSession = true; // Manual increment counts as consumed for this session
+      _isIncrementedThisSession = true; // Button click counts as the "action" for this session
     });
   }
 
@@ -578,7 +583,7 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
                   Expanded(
                     child: _buildTextField(
                       controller: _invoiceNumberCtrl,
-                      hint: '2026-INV00693',
+                      hint: '2026-INV00748',
                       validator: (v) => v!.isEmpty ? 'Invoice number required' : null,
                     ),
                   ),
@@ -601,7 +606,7 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
               ),
               const SizedBox(height: 12),
               _buildLabel('REFERENCE CODE'),
-              _buildTextField(controller: _referenceCodeCtrl, hint: 'ZPI2026-00693'),
+              _buildTextField(controller: _referenceCodeCtrl, hint: 'ZPI2026-00748'),
               const SizedBox(height: 12),
               _buildLabel('ISSUE DATE'),
               GestureDetector(
