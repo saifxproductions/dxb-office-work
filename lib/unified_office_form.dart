@@ -117,20 +117,24 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
   // --- Logic Methods ---
 
   Future<void> _loadLastInvoiceNumber() async {
-    final lastNum = await InvoiceNumberService.getLastInvoiceNumber();
-    final nextNum = lastNum + 1; // Default to next number
-    final formatted = InvoiceNumberService.formatFull(nextNum);
-    final refCode = 'ZPI2026-${nextNum.toString().padLeft(5, '0')}';
+    final lastInv = await InvoiceNumberService.getLastInvoiceNumber();
+    final lastRef = await InvoiceNumberService.getLastReferenceNumber();
+    
+    final nextInv = lastInv + 1;
+    final nextRef = lastRef + 1;
+    
+    final formattedInv = InvoiceNumberService.formatFull(nextInv);
+    final formattedRef = InvoiceNumberService.formatRef(nextRef);
     
     setState(() {
       // Temporarily disable listeners during load to avoid marking as edited
       _isInvoiceNumberEdited = true; 
       _isReferenceCodeEdited = true;
       
-      _invoiceNumberCtrl.text = formatted;
-      widget.invoice.invoiceNumber = formatted;
-      _referenceCodeCtrl.text = refCode;
-      widget.invoice.referenceCode = refCode;
+      _invoiceNumberCtrl.text = formattedInv;
+      widget.invoice.invoiceNumber = formattedInv;
+      _referenceCodeCtrl.text = formattedRef;
+      widget.invoice.referenceCode = formattedRef;
       
       _isInvoiceNumberEdited = false;
       _isReferenceCodeEdited = false;
@@ -141,27 +145,40 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
   Future<void> _handleAutoIncrement() async {
     if (_isIncrementedThisSession) return;
 
-    // If invoice number is NOT manually edited, we commit the increment
-    if (!_isInvoiceNumberEdited) {
-      final currentNum = InvoiceNumberService.parseNumber(_invoiceNumberCtrl.text);
-      await InvoiceNumberService.saveInvoiceNumber(currentNum);
-      _isIncrementedThisSession = true;
-    }
+    // We always save the current state of the fields as the "last used" numbers.
+    // This honors manual edits as the new baseline for future increments.
+    final currentInv = InvoiceNumberService.parseNumber(_invoiceNumberCtrl.text);
+    final currentRef = InvoiceNumberService.parseNumber(_referenceCodeCtrl.text);
+    
+    await InvoiceNumberService.saveInvoiceNumber(currentInv);
+    await InvoiceNumberService.saveReferenceNumber(currentRef);
+    
+    _isIncrementedThisSession = true;
   }
 
   Future<void> _incrementInvoiceNumber() async {
-    final currentNum = InvoiceNumberService.parseNumber(_invoiceNumberCtrl.text);
-    final nextNum = currentNum + 1;
-    final formatted = InvoiceNumberService.formatFull(nextNum);
-    final refCode = 'ZPI2026-${nextNum.toString().padLeft(5, '0')}';
-    await InvoiceNumberService.saveInvoiceNumber(nextNum);
+    final currentInv = InvoiceNumberService.parseNumber(_invoiceNumberCtrl.text);
+    final currentRef = InvoiceNumberService.parseNumber(_referenceCodeCtrl.text);
+    
+    final nextInv = currentInv + 1;
+    final nextRef = currentRef + 1;
+    
+    final formattedInv = InvoiceNumberService.formatFull(nextInv);
+    final formattedRef = InvoiceNumberService.formatRef(nextRef);
+    
+    // We save immediately on manual increment to ensure the new baseline is captured
+    await InvoiceNumberService.saveInvoiceNumber(nextInv);
+    await InvoiceNumberService.saveReferenceNumber(nextRef);
+    
     setState(() {
       _isInvoiceNumberEdited = true;
       _isReferenceCodeEdited = true;
-      _invoiceNumberCtrl.text = formatted;
-      widget.invoice.invoiceNumber = formatted;
-      _referenceCodeCtrl.text = refCode;
-      widget.invoice.referenceCode = refCode;
+      
+      _invoiceNumberCtrl.text = formattedInv;
+      widget.invoice.invoiceNumber = formattedInv;
+      _referenceCodeCtrl.text = formattedRef;
+      widget.invoice.referenceCode = formattedRef;
+      
       _isIncrementedThisSession = true; // Manual increment counts as consumed for this session
     });
   }
