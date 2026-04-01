@@ -11,6 +11,7 @@ import 'invoice_number_service.dart';
 import 'preview_screen.dart';
 import 'property_inspection_pdf_generator.dart';
 import 'proposal_preview_screen.dart';
+import 'pdf_generator_service.dart';
 
 class UnifiedOfficeForm extends StatefulWidget {
   final InvoiceModel invoice;
@@ -48,6 +49,7 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
   bool _isInvoiceNumberEdited = false;
   bool _isReferenceCodeEdited = false;
   bool _isIncrementedThisSession = false;
+  bool _isSharingBoth = false;
 
   @override
   void initState() {
@@ -407,6 +409,60 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
     );
   }
 
+  Future<void> _shareBothDocuments() async {
+    await _handleAutoIncrement();
+    _syncData();
+    if (!_validateAll()) return;
+
+    setState(() => _isSharingBoth = true);
+
+    try {
+      final dir = await getTemporaryDirectory();
+      
+      // 1. Generate Invoice PDF
+      final invoiceFile = await PdfGeneratorService.generateInvoicePdf(widget.invoice);
+
+      // 2. Generate Proposal PDF
+      final proposalData = ProposalData.fromInvoiceModel(widget.invoice);
+      final proposalGenerator = PropertyInspectionPdfGenerator(data: proposalData);
+      
+      String nameForFile = widget.invoice.richTextClientDetails.isNotEmpty 
+          ? widget.invoice.richTextClientDetails.split('\n').first 
+          : 'Client';
+          
+      final sanitizedName = nameForFile
+          .toUpperCase()
+          .replaceAll(RegExp(r'[^A-Z0-9 ]'), '')
+          .trim()
+          .replaceAll(' ', '_');
+          
+      final proposalFileName = 'Proposal_${widget.invoice.invoiceNumberShort}_${sanitizedName}.pdf';
+      final proposalPath = '${dir.path}/$proposalFileName';
+      final proposalFile = await proposalGenerator.generate(proposalPath);
+
+      // 3. Share Both
+      await Share.shareXFiles(
+        [
+          XFile(invoiceFile.path),
+          XFile(proposalFile.path),
+        ],
+        text: 'Property Inspection Documents - ${widget.invoice.invoiceNumber}',
+        subject: 'Invoice & Proposal - ${widget.invoice.invoiceNumber}',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error sharing bundle: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSharingBoth = false);
+    }
+  }
+
   String _processSaaSFormatting(String input) {
     if (input.isEmpty) return "";
     return input.split('\n').map((line) {
@@ -658,6 +714,23 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
         ),
       ),
       bottomNavigationBar: _buildBottomActions(),
+      floatingActionButton: _buildFloatingActionButton(),
+    );
+  }
+
+  Widget? _buildFloatingActionButton() {
+    return FloatingActionButton.extended(
+      onPressed: (_isSharingBoth || !_allPricesVerified()) ? null : _shareBothDocuments,
+      backgroundColor: _allPricesVerified() ? const Color(0xFF0D9488) : Colors.grey,
+      elevation: 4,
+      highlightElevation: 8,
+      icon: _isSharingBoth 
+        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+        : const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+      label: Text(
+        _isSharingBoth ? 'Generating...' : 'Share Both',
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+      ),
     );
   }
 
