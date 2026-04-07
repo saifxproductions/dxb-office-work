@@ -66,18 +66,18 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
       if (!_isInvoiceNumberEdited) {
         setState(() => _isInvoiceNumberEdited = true);
       } else {
-        // Save manual changes immediately as unconsumed baselines
-        final val = InvoiceNumberService.parseNumber(_invoiceNumberCtrl.text);
-        InvoiceNumberService.saveInvoiceNumber(val);
+        // Correctly save manual changes as unconsumed baselines in real-time
+        final num = InvoiceNumberService.parseNumber(_invoiceNumberCtrl.text);
+        InvoiceNumberService.saveInvoiceNumber(num, consumed: false);
       }
     });
     _referenceCodeCtrl.addListener(() {
       if (!_isReferenceCodeEdited) {
         setState(() => _isReferenceCodeEdited = true);
       } else {
-        // Save manual changes immediately as unconsumed baselines
-        final val = InvoiceNumberService.parseNumber(_referenceCodeCtrl.text);
-        InvoiceNumberService.saveReferenceNumber(val);
+        // Correctly save manual changes as unconsumed baselines in real-time
+        final num = InvoiceNumberService.parseNumber(_referenceCodeCtrl.text);
+        InvoiceNumberService.saveReferenceNumber(num, consumed: false);
       }
     });
 
@@ -130,7 +130,7 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
     final invConsumed = await InvoiceNumberService.isInvoiceConsumed();
     final refConsumed = await InvoiceNumberService.isReferenceConsumed();
     
-    // Only increment if the number was "consumed" by a generated report
+    // Increment only if the number was "consumed" in a previous report
     final displayInv = invConsumed ? lastInv + 1 : lastInv;
     final displayRef = refConsumed ? lastRef + 1 : lastRef;
     
@@ -152,11 +152,15 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
   }
 
   Future<void> _handleAutoIncrement() async {
+    // If the number was already consumed during this session, do nothing else
     if (_isIncrementedThisSession) return;
 
-    // Mark current numbers as "consumed" so the next session increments them
-    await InvoiceNumberService.markInvoiceConsumed();
-    await InvoiceNumberService.markReferenceConsumed();
+    // Correctly save the current screen values and mark them as consumed
+    final currentInv = InvoiceNumberService.parseNumber(_invoiceNumberCtrl.text);
+    final currentRef = InvoiceNumberService.parseNumber(_referenceCodeCtrl.text);
+    
+    await InvoiceNumberService.saveInvoiceNumber(currentInv, consumed: true);
+    await InvoiceNumberService.saveReferenceNumber(currentRef, consumed: true);
     
     _isIncrementedThisSession = true;
   }
@@ -171,9 +175,9 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
     final formattedInv = InvoiceNumberService.formatFull(nextInv);
     final formattedRef = InvoiceNumberService.formatRef(nextRef);
     
-    // Save the new values as unconsumed baselines
-    await InvoiceNumberService.saveInvoiceNumber(nextInv);
-    await InvoiceNumberService.saveReferenceNumber(nextRef);
+    // Correctly save the new values and mark them as unconsumed (baseline for next restart)
+    await InvoiceNumberService.saveInvoiceNumber(nextInv, consumed: false);
+    await InvoiceNumberService.saveReferenceNumber(nextRef, consumed: false);
     
     setState(() {
       _isInvoiceNumberEdited = true;
@@ -184,7 +188,8 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
       _referenceCodeCtrl.text = formattedRef;
       widget.invoice.referenceCode = formattedRef;
       
-      _isIncrementedThisSession = true; // Button click counts as the "action" for this session
+      // We don't mark as consumed yet because they haven't generated a report with this new number.
+       _isIncrementedThisSession = false; 
     });
   }
 
@@ -253,7 +258,6 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
           final ctrl = _itemControllersList[i];
           widget.invoice.serviceItems[i].itemName = ctrl.nameCtrl.text;
           widget.invoice.serviceItems[i].unit = ctrl.unitCtrl.text;
-          widget.invoice.serviceItems[i].noOfUnits = int.tryParse(ctrl.unitsCtrl.text) ?? 0;
           widget.invoice.serviceItems[i].perUnit = double.tryParse(ctrl.perUnitCtrl.text) ?? 0.0;
         }
     }
@@ -819,8 +823,6 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
             children: [
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_buildLabel('UNIT'), _buildTextField(controller: ctrl.unitCtrl, hint: '2BHK', onChanged: (_) => setState(() => _syncData()))])),
               const SizedBox(width: 8),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_buildLabel('UNITS'), _buildTextField(controller: ctrl.unitsCtrl, hint: '1', keyboardType: TextInputType.number, onChanged: (_) => setState(() => _syncData()))])),
-              const SizedBox(width: 8),
               Expanded(
                 flex: 2,
                 child: Column(
@@ -868,7 +870,7 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              'Amount: AED ${( (double.tryParse(ctrl.perUnitCtrl.text) ?? 0.0) * (int.tryParse(ctrl.unitsCtrl.text) ?? 0)).toStringAsFixed(2)}',
+              'Amount: AED ${(double.tryParse(ctrl.perUnitCtrl.text) ?? 0.0).toStringAsFixed(2)}',
               style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1565C0)),
             ),
           ),
@@ -987,14 +989,12 @@ class _UnifiedOfficeFormState extends State<UnifiedOfficeForm> {
 class _ItemControllers {
   final TextEditingController nameCtrl;
   final TextEditingController unitCtrl;
-  final TextEditingController unitsCtrl;
   final TextEditingController perUnitCtrl;
   final TextEditingController confirmPerUnitCtrl;
 
   _ItemControllers({
     required this.nameCtrl,
     required this.unitCtrl,
-    required this.unitsCtrl,
     required this.perUnitCtrl,
     required this.confirmPerUnitCtrl,
   });
@@ -1003,7 +1003,6 @@ class _ItemControllers {
     return _ItemControllers(
       nameCtrl: TextEditingController(text: item.itemName),
       unitCtrl: TextEditingController(text: item.unit),
-      unitsCtrl: TextEditingController(text: item.noOfUnits > 0 ? item.noOfUnits.toString() : '1'),
       perUnitCtrl: TextEditingController(text: item.perUnit > 0 ? item.perUnit.toString() : ''),
       confirmPerUnitCtrl: TextEditingController(),
     );
@@ -1029,7 +1028,6 @@ class _ItemControllers {
   void dispose() {
     nameCtrl.dispose();
     unitCtrl.dispose();
-    unitsCtrl.dispose();
     perUnitCtrl.dispose();
     confirmPerUnitCtrl.dispose();
   }

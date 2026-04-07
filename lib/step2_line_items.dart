@@ -102,8 +102,6 @@ class _Step2LineItemsState extends State<Step2LineItems> with AutomaticKeepAlive
       final ctrl = _itemControllersList[i];
       widget.invoice.serviceItems[i].itemName = ctrl.nameCtrl.text;
       widget.invoice.serviceItems[i].unit = ctrl.unitCtrl.text;
-      widget.invoice.serviceItems[i].noOfUnits =
-          int.tryParse(ctrl.unitsCtrl.text) ?? 0;
       widget.invoice.serviceItems[i].perUnit =
           double.tryParse(ctrl.perUnitCtrl.text) ?? 0.0;
     }
@@ -757,23 +755,8 @@ class _Step2LineItemsState extends State<Step2LineItems> with AutomaticKeepAlive
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildLabel('NO. OF UNITS'),
-                    _buildTextField(
-                      controller: ctrl.unitsCtrl,
-                      hint: '1',
-                      keyboardType: TextInputType.number,
-                      onChanged: (_) => setState(() => _syncAndCalculate()),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
+                flex: 2,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -793,7 +776,7 @@ class _Step2LineItemsState extends State<Step2LineItems> with AutomaticKeepAlive
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              'Amount: AED ${(double.tryParse(ctrl.perUnitCtrl.text) ?? 0.0 * (int.tryParse(ctrl.unitsCtrl.text) ?? 0)).toStringAsFixed(2)}',
+              'Amount: AED ${(double.tryParse(ctrl.perUnitCtrl.text) ?? 0.0).toStringAsFixed(2)}',
               style: const TextStyle(
                   fontWeight: FontWeight.w600, color: Color(0xFF1565C0)),
             ),
@@ -863,13 +846,11 @@ class _Step2LineItemsState extends State<Step2LineItems> with AutomaticKeepAlive
 class _ItemControllers {
   final TextEditingController nameCtrl;
   final TextEditingController unitCtrl;
-  final TextEditingController unitsCtrl;
   final TextEditingController perUnitCtrl;
 
   _ItemControllers({
     required this.nameCtrl,
     required this.unitCtrl,
-    required this.unitsCtrl,
     required this.perUnitCtrl,
   });
 
@@ -877,7 +858,6 @@ class _ItemControllers {
     return _ItemControllers(
       nameCtrl: TextEditingController(text: item.itemName),
       unitCtrl: TextEditingController(text: item.unit),
-      unitsCtrl: TextEditingController(text: item.noOfUnits > 0 ? item.noOfUnits.toString() : '1'),
       perUnitCtrl: TextEditingController(text: item.perUnit > 0 ? item.perUnit.toString() : ''),
     );
   }
@@ -885,7 +865,6 @@ class _ItemControllers {
   void dispose() {
     nameCtrl.dispose();
     unitCtrl.dispose();
-    unitsCtrl.dispose();
     perUnitCtrl.dispose();
   }
 }

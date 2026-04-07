@@ -997,7 +997,7 @@ class PdfGeneratorService {
                   children: [
                     _tableCell('DESCRIPTION', isHeader: true, align: pw.TextAlign.left),
                     _tableCell('UNIT', isHeader: true),
-                    _tableCell('QTY', isHeader: true),
+                    // _tableCell('QTY', isHeader: true),
                     _tableCell('PRICE', isHeader: true),
                     _tableCell('AMOUNT (AED)', isHeader: true, align: pw.TextAlign.right),
                   ],
@@ -1006,7 +1006,7 @@ class PdfGeneratorService {
                   children: [
                     _tableCell(item.itemName, align: pw.TextAlign.left),
                     _tableCell(item.unit),
-                    _tableCell(item.noOfUnits.toString()),
+                    // _tableCell(item.noOfUnits.toString()),
                     _tableCell(item.perUnit > 0 ? item.perUnit.toStringAsFixed(0) : ''),
                     _tableCell(item.amount.toStringAsFixed(2), align: pw.TextAlign.right),
                   ],

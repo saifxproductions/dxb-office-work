@@ -1,17 +1,15 @@
 class ServiceItem {
   String itemName;
   String unit;
-  int noOfUnits;
   double perUnit;
 
   ServiceItem({
     this.itemName = '',
     this.unit = '',
-    this.noOfUnits = 0,
     this.perUnit = 0.0,
   });
 
-  double get amount => noOfUnits * perUnit;
+  double get amount => perUnit;
 }
 
 class InvoiceModel {
@@ -84,14 +82,13 @@ class InvoiceModel {
   })  : issueDate = issueDate ?? DateTime.now(),
         additionalClientFields = additionalClientFields ?? [],
         serviceItems = serviceItems ??
-            [
-              ServiceItem(
-                itemName: 'Property Snagging/Inspection',
-                unit: '',
-                noOfUnits: 1,
-                perUnit: 0.0,
-              ),
-            ];
+          [
+            ServiceItem(
+              itemName: 'Property Snagging/Inspection and De-snagging/Re-inspection + 2 Visits',
+              unit: '',
+              perUnit: 0.0,
+            ),
+          ];
 
   double get subtotal =>
       serviceItems.fold(0.0, (sum, item) => sum + item.amount);

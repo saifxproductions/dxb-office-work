@@ -1331,8 +1331,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
                               0: FlexColumnWidth(4),
                               1: FlexColumnWidth(1.5),
                               2: FlexColumnWidth(1.5),
-                              3: FlexColumnWidth(1.5),
-                              4: FlexColumnWidth(2),
+                              3: FlexColumnWidth(2),
                             },
                             children: [
                               TableRow(
@@ -1340,7 +1339,6 @@ class _PreviewScreenState extends State<PreviewScreen> {
                                 children: [
                                   _tableHeader(''),
                                   _tableHeader('UNIT'),
-                                  _tableHeader('NO. OF UNITS'),
                                   _tableHeader('PER UNIT'),
                                   _tableHeader('Amount (AED)', align: TextAlign.right),
                                 ],
@@ -1349,17 +1347,16 @@ class _PreviewScreenState extends State<PreviewScreen> {
                                 children: [
                                   _tableCell(item.itemName),
                                   _tableCell(item.unit),
-                                  _tableCell(item.noOfUnits.toString()),
                                   _tableCell(item.perUnit > 0 ? item.perUnit.toStringAsFixed(0) : ''),
                                   _tableCell(item.amount > 0 ? item.amount.toStringAsFixed(2) : '0.00', align: TextAlign.right),
                                 ],
                               )),
                               TableRow(children: [
-                                _tableCell(''), _tableCell(''), _tableCell(''), _tableCell(''),
+                                _tableCell(''), _tableCell(''), _tableCell(''),
                                 _tableCell(inv.subtotal.toStringAsFixed(2), align: TextAlign.right),
                               ]),
                               TableRow(children: [
-                                _tableCell(''), _tableCell(''), _tableCell(''),
+                                _tableCell(''), _tableCell(''),
                                 Padding(
                                   padding: const EdgeInsets.all(5),
                                   child: Text('VAT ${inv.vatRate.toInt()}% (AED):',
@@ -1371,7 +1368,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
                               TableRow(
                                 decoration: BoxDecoration(color: kPrimaryEmerald.withOpacity(0.05)),
                                 children: [
-                                  _tableCell(''), _tableCell(''), _tableCell(''),
+                                  _tableCell(''), _tableCell(''),
                                   Padding(
                                     padding: const EdgeInsets.all(5),
                                     child: const Text('Total Amount (AED):',

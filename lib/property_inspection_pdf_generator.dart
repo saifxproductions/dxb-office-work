@@ -11,17 +11,15 @@ import 'invoice_model.dart';
 class ProposalServiceItem {
   final String description;
   final String unit;
-  final int qty;
   final double price;
 
   const ProposalServiceItem({
     required this.description,
     required this.unit,
-    required this.qty,
     required this.price,
   });
 
-  double get amount => qty * price;
+  double get amount => price;
 }
 
 class ProposalData {
@@ -69,7 +67,6 @@ class ProposalData {
           .map((item) => ProposalServiceItem(
                 description: item.itemName,
                 unit: item.unit,
-                qty: item.noOfUnits,
                 price: item.perUnit,
               ))
           .toList(),
@@ -650,7 +647,7 @@ class PropertyInspectionPdfGenerator {
                             pw.Expanded(
                               flex: 3,
                               child: pw.Text(
-                                'Property Snagging/Inspection',
+                                'Property Snagging/Inspection and De-snagging/Re-inspection + 2 Visits',
                                 style: pw.TextStyle(
                                   color: AppTheme.white,
                                   fontWeight: pw.FontWeight.bold,
@@ -664,7 +661,7 @@ class PropertyInspectionPdfGenerator {
 
                       // Column headers
                       _tableRow(
-                        ['DESCRIPTION', 'UNIT', 'QTY', 'PRICE', 'AMOUNT (AED)'],
+                        ['DESCRIPTION', 'UNIT', 'PRICE', 'AMOUNT (AED)'],
                         isHeader: true,
                       ),
 
@@ -672,7 +669,6 @@ class PropertyInspectionPdfGenerator {
                       ...data.serviceItems.map((item) => _tableRow([
                         item.description,
                         item.unit,
-                        item.qty.toString(),
                         item.price > 0 ? item.price.toStringAsFixed(0) : '',
                         item.amount > 0 ? item.amount.toStringAsFixed(2) : '0.00',
                       ])),
@@ -682,7 +678,7 @@ class PropertyInspectionPdfGenerator {
 
                       // Totals
                       _totalRow('Subtotal', data.subtotal.toStringAsFixed(2)),
-                      _totalRow('Government Vat ${data.vatRate.toInt()}%', data.vat.toStringAsFixed(2)),
+                      _totalRow('Vat ${data.vatRate.toInt()}%', data.vat.toStringAsFixed(2)),
                       _totalRow('Grand Total', data.grandTotal.toStringAsFixed(2), bold: true),
                     ],
                   ),
@@ -833,7 +829,9 @@ class PropertyInspectionPdfGenerator {
       ),
       child: pw.Row(
         children: cells.asMap().entries.map((entry) {
+          final flex = entry.key == 0 ? 3 : 1;
           return pw.Expanded(
+            flex: flex,
             child: pw.Container(
               padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: pw.BoxDecoration(
@@ -865,7 +863,7 @@ class PropertyInspectionPdfGenerator {
       child: pw.Row(
         children: [
           pw.Expanded(
-            flex: 3,
+            flex: 5,
             child: pw.Container(
               padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               alignment: pw.Alignment.centerRight,
@@ -879,19 +877,21 @@ class PropertyInspectionPdfGenerator {
               ),
             ),
           ),
-          pw.Container(
-            width: 100,
-            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: const pw.BoxDecoration(
-              border: pw.Border(left: pw.BorderSide(color: AppTheme.midGrey, width: 0.5)),
-            ),
-            child: pw.Text(
-              value,
-              textAlign: pw.TextAlign.center,
-              style: pw.TextStyle(
-                fontSize: 11,
-                fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
-                color: AppTheme.darkText,
+          pw.Expanded(
+            flex: 1,
+            child: pw.Container(
+              padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: const pw.BoxDecoration(
+                border: pw.Border(left: pw.BorderSide(color: AppTheme.midGrey, width: 0.5)),
+              ),
+              child: pw.Text(
+                value,
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(
+                  fontSize: 11,
+                  fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+                  color: AppTheme.darkText,
+                ),
               ),
             ),
           ),
